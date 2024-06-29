@@ -17,7 +17,7 @@ model = ResNet8()
 
 def setup(rank, world_size):
     dist.init_process_group("gloo", rank=rank, world_size=world_size)
-
+    print("group created")
 
 def cleanup():
     dist.destroy_process_group()
