@@ -23,7 +23,7 @@ def cleanup():
     dist.destroy_process_group()
 
 
-def motef_worker(rank, world_size, model, data_loader, epochs, gamma, eta, lambda_, C_alpha, weight):
+def motef_worker(rank, world_size, model, data_loader, epochs, gamma, eta, lambda_, C_alpha):
     setup(rank, world_size)
 
     device = torch.device(f"cuda:{rank}" if torch.cuda.is_available() else "cpu")
@@ -127,9 +127,11 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
 
     processes = []
     for rank in range(world_size):
-        data_loader = DataLoader(trainset, batch_size=64, shuffle=True,
-                                 num_workers=2, sampler=torch.utils.data.distributed.DistributedSampler(
-                trainset, num_replicas=world_size, rank=rank))
+        sampler = torch.utils.data.distributed.DistributedSampler(
+            trainset, num_replicas=world_size, rank=rank, shuffle=True)
+
+        data_loader = DataLoader(trainset, batch_size=64,
+                                 num_workers=2, sampler=sampler)
 
         p = mp.Process(target=motef_worker,
                        args=(rank, world_size, model, data_loader, epochs, gamma, eta, lambda_, C_alpha))
