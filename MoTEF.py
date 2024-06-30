@@ -17,9 +17,13 @@ import time
 model = ResNet8()
 
 
+import os
+
 def setup(rank, world_size):
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
-    print("group created")
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    backend = 'nccl' if torch.cuda.is_available() else 'gloo'
+    dist.init_process_group(backend, rank=rank, world_size=world_size)
 
 def cleanup():
     dist.destroy_process_group()
@@ -27,8 +31,12 @@ def cleanup():
 
 def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha):
     setup(rank, world_size)
-
-    device = torch.device(f"cuda:{rank}" if torch.cuda.is_available() else "cpu")
+    num_gpus = torch.cuda.device_count()
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")  # All workers use the same GPU
+        torch.cuda.set_device(device)
+    else:
+        device = torch.device("cpu")
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -153,6 +161,18 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     cleanup()
 
 
+def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, C_alpha):
+    train_sampler = torch.utils.data.distributed.DistributedSampler(
+        trainset, num_replicas=world_size, rank=rank, shuffle=True)
+
+    train_loader = DataLoader(trainset, batch_size=64,
+                              num_workers=2, sampler=train_sampler)
+
+    val_loader = DataLoader(valset, batch_size=64, shuffle=False)
+
+    motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha)
+
+
 def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -162,32 +182,21 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
     valset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-
-    model = ResNet8()
+    model = ResNet8().cpu()
     model.share_memory()
 
-    processes = []
-    for rank in range(world_size):
-        train_sampler = torch.utils.data.distributed.DistributedSampler(
-            trainset, num_replicas=world_size, rank=rank, shuffle=True)
-
-        train_loader = DataLoader(trainset, batch_size=64,
-                                  num_workers=2, sampler=train_sampler)
-
-        val_loader = DataLoader(valset, batch_size=64, shuffle=False)
-
-        p = mp.Process(target=motef_worker,
-                       args=(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha))
-        p.start()
-        processes.append(p)
-
-    for p in processes:
-        p.join()
+    mp.spawn(
+        worker_fn,
+        args=(world_size, model, trainset, valset, epochs, gamma, eta, lambda_, C_alpha),
+        nprocs=world_size
+    )
 
 
 if __name__ == "__main__":
     world_size = 4  # Number of nodes
     start_time = time.time()
     run_motef(world_size=world_size, epochs=10, gamma=0.1, eta=0.01, lambda_=0.9, C_alpha=0.5)
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
     total_time = time.time() - start_time
     print(f"Total execution time: {total_time:.2f}s")
