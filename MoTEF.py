@@ -12,6 +12,8 @@ from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
 
+import time
+
 model = ResNet8()
 
 
@@ -23,7 +25,7 @@ def cleanup():
     dist.destroy_process_group()
 
 
-def motef_worker(rank, world_size, model, data_loader, epochs, gamma, eta, lambda_, C_alpha):
+def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha):
     setup(rank, world_size)
 
     device = torch.device(f"cuda:{rank}" if torch.cuda.is_available() else "cpu")
@@ -52,12 +54,16 @@ def motef_worker(rank, world_size, model, data_loader, epochs, gamma, eta, lambd
     nn.init.zeros_(weights)
     # TODO: fill weights with 1 ones for neighbors and keep 0 for the rest
 
+    # time the experiment
+    start_time = time.time()
     ##############################################################
     #                   start training routine                   #
     ##############################################################
 
     for epoch in range(epochs):
-        for batch_idx, (data, target) in enumerate(data_loader):
+        train_loader.sampler.set_epoch(epoch)
+        model.train()
+        for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
 
             # Receive q_h and q_g from neighbors
@@ -111,6 +117,39 @@ def motef_worker(rank, world_size, model, data_loader, epochs, gamma, eta, lambd
                 for param, x_i in zip(model.parameters(), x.split(param.numel())):
                     param.data = x_i.view(param.shape)
 
+                # Evaluate on validation set
+                model.eval()
+                val_loss = 0
+                val_acc = 0
+                with torch.no_grad():
+                    for data, target in val_loader:
+                        data, target = data.to(device), target.to(device)
+                        output = model(data)
+                        val_loss += criterion(output, target).item()
+                        val_acc += model.accuracy(data, target).item()
+
+                val_loss /= len(val_loader)
+                val_acc /= len(val_loader)
+
+                epoch_time = time.time() - start_time
+                print(
+                    f"Rank {rank}, Epoch {epoch + 1}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.2f}s")
+
+                start_time = time.time()
+
+            # Time inference
+            model.eval()
+            inference_times = []
+            with torch.no_grad():
+                for data, _ in val_loader:
+                    data = data.to(device)
+                    start = time.time()
+                    _ = model(data)
+                    inference_times.append(time.time() - start)
+
+            avg_inference_time = sum(inference_times) / len(inference_times)
+            print(f"Rank {rank}, Average inference time: {avg_inference_time * 1000:.2f}ms")
+
     cleanup()
 
 
@@ -121,20 +160,24 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
     ])
 
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+    valset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+
 
     model = ResNet8()
     model.share_memory()
 
     processes = []
     for rank in range(world_size):
-        sampler = torch.utils.data.distributed.DistributedSampler(
+        train_sampler = torch.utils.data.distributed.DistributedSampler(
             trainset, num_replicas=world_size, rank=rank, shuffle=True)
 
-        data_loader = DataLoader(trainset, batch_size=64,
-                                 num_workers=2, sampler=sampler)
+        train_loader = DataLoader(trainset, batch_size=64,
+                                  num_workers=2, sampler=train_sampler)
+
+        val_loader = DataLoader(valset, batch_size=64, shuffle=False)
 
         p = mp.Process(target=motef_worker,
-                       args=(rank, world_size, model, data_loader, epochs, gamma, eta, lambda_, C_alpha))
+                       args=(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha))
         p.start()
         processes.append(p)
 
@@ -144,4 +187,7 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
 
 if __name__ == "__main__":
     world_size = 4  # Number of nodes
+    start_time = time.time()
     run_motef(world_size=world_size, epochs=10, gamma=0.1, eta=0.01, lambda_=0.9, C_alpha=0.5)
+    total_time = time.time() - start_time
+    print(f"Total execution time: {total_time:.2f}s")

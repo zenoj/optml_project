@@ -75,5 +75,11 @@ class ResNet(nn.Module):
 
         return out1, out2, tar, self.emb.weight
 
+    def accuracy(self, x, y):
+        with torch.no_grad():
+            logits = self(x)
+            pred = torch.argmax(logits, dim=1)
+            return (pred == y).float().mean()
+
 def ResNet8():
     return ResNet(BasicBlock, [1,1,1]) #2048
