@@ -60,6 +60,7 @@ class ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
+# TODO: fix forward pass function: epoch, batch_idx needed?
     def forward(self, x, targets, epoch, batch_idx):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
