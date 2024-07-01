@@ -16,27 +16,70 @@ import time
 
 model = ResNet8()
 
-
 import os
+
 
 def setup(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
-    backend = 'nccl' if torch.cuda.is_available() else 'gloo'
+    # set backend manually for now to avoid problems with shared GPU
+    backend = 'gloo'
+    # backend = 'nccl' if torch.cuda.is_available() else 'gloo'
     dist.init_process_group(backend, rank=rank, world_size=world_size)
+
 
 def cleanup():
     dist.destroy_process_group()
 
 
+def communicate_with_neighbors(rank, world_size, q_h_i, q_g_i):
+    device = q_h_i.device
+    left_neighbor = (rank - 1) % world_size
+    right_neighbor = (rank + 1) % world_size
+
+    # Create Buffers for receiving q_h_i and q_g_i
+    recv_left_q_h_i = torch.zeros_like(q_h_i)
+    recv_right_q_h_i = torch.zeros_like(q_h_i)
+    recv_left_q_g_i = torch.zeros_like(q_g_i)
+    recv_right_q_g_i = torch.zeros_like(q_g_i)
+
+    # send q_h_i message to left neighbor async and receive from right neighbor sync
+    req_send_left_q_h_i = dist.isend(q_h_i, dst=left_neighbor)
+    req_recv_right_q_h_i = dist.recv(recv_right_q_h_i, src=right_neighbor)
+    req_send_left_q_h_i.wait()
+
+    # send q_h_i message to right neighbor async and receive from left neighbor sync
+    req_send_right_q_h_i = dist.isend(q_h_i, dst=right_neighbor)
+    req_recv_left_q_h_i = dist.recv(recv_left_q_h_i, src=left_neighbor)
+    req_send_right_q_h_i.wait()
+
+    # send q_g_i message to left neighbor async and receive from right neighbor sync
+    req_send_left_q_g_i = dist.isend(q_g_i, dst=left_neighbor)
+    req_recv_right_q_g_i = dist.recv(recv_right_q_g_i, src=right_neighbor)
+    req_send_left_q_g_i.wait()
+
+    # send q_g_i message to right neighbor async and receive from left neighbor sync
+    req_send_right_q_g_i = dist.isend(q_g_i, dst=right_neighbor)
+    req_recv_left_q_g_i = dist.recv(recv_left_q_g_i, src=left_neighbor)
+    req_send_right_q_g_i.wait()
+
+    dist.barrier()
+    return (req_recv_left_q_h_i,
+            req_recv_right_q_h_i), (req_recv_left_q_g_i, req_recv_right_q_g_i)
+
+
 def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha):
     setup(rank, world_size)
-    num_gpus = torch.cuda.device_count()
-    if torch.cuda.is_available():
-        device = torch.device("cuda:0")  # All workers use the same GPU
-        torch.cuda.set_device(device)
-    else:
-        device = torch.device("cpu")
+
+    # num_gpus = torch.cuda.device_count()
+
+    # avoid cuda for now for simplification
+    device = torch.device('cpu')
+    # if torch.cuda.is_available():
+    #     device = torch.device("cuda:0")  # All workers use the same GPU
+    #     torch.cuda.set_device(device)
+    # else:
+    #     device = torch.device("cpu")
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -55,9 +98,9 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     right_neighbor = (rank + 1) % world_size
     idxs_n = [left_neighbor, right_neighbor]
     neighborStates = {left_neighbor:
-                          {"h": {torch.zeros_like(x)}, "g": {torch.zeros_like(x)}},
+                          {"h": torch.zeros_like(x), "g": torch.zeros_like(x)},
                       right_neighbor:
-                          {"h": {torch.zeros_like(x)}, "g": {torch.zeros_like(x)}}}
+                          {"h": torch.zeros_like(x), "g": torch.zeros_like(x)}}
     weights = torch.empty(world_size, world_size)
     nn.init.zeros_(weights)
     # TODO: fill weights with 1 ones for neighbors and keep 0 for the rest
@@ -75,29 +118,24 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             data, target = data.to(device), target.to(device)
 
             # Receive q_h and q_g from neighbors
-            for n in neighborStates.keys():
-                # send messages to neighbor
-                dist.send(q_h_i, dst=n)
-                dist.send(q_g_i, dst=n)
 
-                # receive message from neighbor
-                q_h_temp = torch.zeros_like(x)
-                q_g_temp = torch.zeros_like(x)
-                dist.recv(q_h_temp, src=n)
-                dist.recv(q_g_temp, src=n)
+            (q_h_i_left, q_h_i_right), (q_g_i_left, q_g_i_right) = communicate_with_neighbors(rank, world_size, q_h_i, q_g_i)
 
-                # update local neighbor states
-                neighborStates[n]["h"] += q_h_temp
-                neighborStates[n]["g"] += q_g_temp
+            # update local neighbor states
+            neighborStates[left_neighbor]["h"] += q_h_i_left
+            neighborStates[left_neighbor]["g"] += q_g_i_left
+
+            neighborStates[right_neighbor]["h"] += q_h_i_right
+            neighborStates[right_neighbor]["g"] += q_g_i_right
 
             # Update x
             weighted_diffs = [weights[rank][x] * (neighborStates[x]["h"] - h) for x in idxs_n]
             mixing = sum(weighted_diffs)
             x += gamma * mixing - eta * v
-            
+
             # Compute q_h
-            q_h = C_alpha * (x - h)
-            h += q_h
+            q_h_i = C_alpha * (x - h)
+            h += q_h_i
 
             # Compute gradient
             model.zero_grad()
@@ -114,8 +152,8 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             v += gamma * mixing_glob_grad + m - m_old
 
             # Compute q_g
-            q_g = C_alpha * (v - g)
-            g += q_g
+            q_g_i = C_alpha * (v - g)
+            g += q_g_i
 
             if batch_idx % 50 == 0:
                 print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.3f}")
@@ -182,7 +220,9 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
     valset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-    model = ResNet8().cpu()
+    model = ResNet8()
+    # model = ResNet8().cpu()
+
     model.share_memory()
 
     mp.spawn(
@@ -193,10 +233,10 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
 
 
 if __name__ == "__main__":
-    world_size = 4  # Number of nodes
+    world_size = 3  # Number of nodes
     start_time = time.time()
     run_motef(world_size=world_size, epochs=10, gamma=0.1, eta=0.01, lambda_=0.9, C_alpha=0.5)
-    if torch.cuda.is_available():
-        torch.cuda.synchronize()
+    # if torch.cuda.is_available():
+    #     torch.cuda.synchronize()
     total_time = time.time() - start_time
     print(f"Total execution time: {total_time:.2f}s")
