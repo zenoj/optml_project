@@ -159,42 +159,40 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
                 print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.3f}")
 
             # Update model parameters with x
+            param_shapes = [p.shape for p in model.parameters()]
+            param_numels = [p.numel() for p in model.parameters()]
+
             with torch.no_grad():
-                for param, x_i in zip(model.parameters(), x.split(param.numel())):
-                    param.data = x_i.view(param.shape)
+                x_split = x.split(param_numels)
+                for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
+                    param.data = x_i.view(shape)
 
-                # Evaluate on validation set
-                model.eval()
-                val_loss = 0
-                val_acc = 0
-                with torch.no_grad():
-                    for data, target in val_loader:
-                        data, target = data.to(device), target.to(device)
-                        output = model(data)
-                        val_loss += criterion(output, target).item()
-                        val_acc += model.accuracy(data, target).item()
+        # Evaluate on validation set
+        model.eval()
+        val_loss = 0
+        val_correct = 0
+        val_total = 0
+        with torch.no_grad():
+            for data, target in val_loader:
+                data, target = data.to(device), target.to(device)
+                output = model(data)
+                val_loss += criterion(output, target).item()
 
-                val_loss /= len(val_loader)
-                val_acc /= len(val_loader)
+                # Calculate accuracy
+                _, predicted = torch.max(output.data, 1)
+                val_total += target.size(0)
+                val_correct += (predicted == target).sum().item()
 
-                epoch_time = time.time() - start_time
-                print(
-                    f"Rank {rank}, Epoch {epoch + 1}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.2f}s")
+        val_loss /= len(val_loader)
+        val_acc = val_correct / val_total
 
-                start_time = time.time()
+        epoch_time = time.time() - start_time
+        print(
+            f"Rank {rank}, Epoch {epoch + 1}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.2f}s")
 
-            # Time inference
-            model.eval()
-            inference_times = []
-            with torch.no_grad():
-                for data, _ in val_loader:
-                    data = data.to(device)
-                    start = time.time()
-                    _ = model(data)
-                    inference_times.append(time.time() - start)
+        start_time = time.time()
 
-            avg_inference_time = sum(inference_times) / len(inference_times)
-            print(f"Rank {rank}, Average inference time: {avg_inference_time * 1000:.2f}ms")
+
 
     cleanup()
 
