@@ -11,6 +11,7 @@ import torch.multiprocessing as mp
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
+from compression_func.Top import top_k_compress
 
 import time
 
@@ -68,7 +69,7 @@ def communicate_with_neighbors(rank, world_size, q_h_i, q_g_i):
             req_recv_right_q_h_i), (req_recv_left_q_g_i, req_recv_right_q_g_i)
 
 
-def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha):
+def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio):
     setup(rank, world_size)
 
     # num_gpus = torch.cuda.device_count()
@@ -134,7 +135,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             x += gamma * mixing - eta * v
 
             # Compute q_h
-            q_h_i = C_alpha * (x - h)
+            q_h_i = top_k_compress((x - h), com_ratio)
             h += q_h_i
 
             # Compute gradient
@@ -152,7 +153,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             v += gamma * mixing_glob_grad + m - m_old
 
             # Compute q_g
-            q_g_i = C_alpha * (v - g)
+            q_g_i = top_k_compress((v - g), com_ratio)
             g += q_g_i
 
             if batch_idx % 50 == 0:
@@ -197,7 +198,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     cleanup()
 
 
-def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, C_alpha):
+def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio):
     train_sampler = torch.utils.data.distributed.DistributedSampler(
         trainset, num_replicas=world_size, rank=rank, shuffle=True)
 
@@ -206,10 +207,10 @@ def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lam
 
     val_loader = DataLoader(valset, batch_size=64, shuffle=False)
 
-    motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, C_alpha)
+    motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio)
 
 
-def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
+def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -225,7 +226,7 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
 
     mp.spawn(
         worker_fn,
-        args=(world_size, model, trainset, valset, epochs, gamma, eta, lambda_, C_alpha),
+        args=(world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio),
         nprocs=world_size
     )
 
@@ -233,7 +234,7 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, C_alpha):
 if __name__ == "__main__":
     world_size = 3  # Number of nodes
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=10, gamma=0.1, eta=0.01, lambda_=0.9, C_alpha=0.5)
+    run_motef(world_size=world_size, epochs=10, gamma=0.1, eta=0.0005, lambda_=0.005, com_ratio=0.5)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
     total_time = time.time() - start_time
