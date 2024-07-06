@@ -87,10 +87,12 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
     # Initialize local states
     x = torch.zeros_like(torch.cat([p.data.view(-1) for p in model.parameters()]))
-    h = torch.zeros_like(x)
-    g = torch.zeros_like(x)
-    v = torch.zeros_like(x)
-    m = torch.zeros_like(x)
+    x = torch.randn_like(x) * 0.01
+    h = torch.randn_like(x) * 0.01
+    g = torch.randn_like(x) * 0.01
+    v = torch.randn_like(x) * 0.01
+    m = torch.randn_like(x) * 0.01
+
     q_h_i = torch.zeros_like(x)
     q_g_i = torch.zeros_like(x)
 
@@ -145,6 +147,12 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             loss.backward()
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
+            # Print gradient statistics
+            print(f"Gradient norm: {grad.norm().item()}")
+
+            # Gradient clipping
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
             # Update m and v
             m_old = m.clone()
             m = (1 - lambda_) * m + lambda_ * grad
@@ -156,12 +164,13 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             q_g_i = top_k_compress((v - g), com_ratio)
             g += q_g_i
 
-            if batch_idx % 50 == 0:
-                print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.3f}")
-
             # Update model parameters with x
             param_shapes = [p.shape for p in model.parameters()]
             param_numels = [p.numel() for p in model.parameters()]
+
+            print(f"x norm: {x.norm().item()}, v norm: {v.norm().item()}")
+            print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
+            print(f"m norm: {m.norm().item()}, gradient norm: {grad.norm().item()}")
 
             with torch.no_grad():
                 x_split = x.split(param_numels)
@@ -234,7 +243,7 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 if __name__ == "__main__":
     world_size = 3  # Number of nodes
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=10, gamma=0.1, eta=0.0005, lambda_=0.005, com_ratio=0.5)
+    run_motef(world_size=world_size, epochs=10, gamma=0.01, eta=0.01, lambda_=0.9, com_ratio=0.2)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
     total_time = time.time() - start_time

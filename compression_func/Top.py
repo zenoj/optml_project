@@ -8,7 +8,7 @@ import torch
 #       x the gradient
 def top_k_compress(x, alpha=0.1):
     # Get the top k values and their indices
-    top_k_values, top_k_indices = torch.topk(x.abs(), alpha*x.size())
+    top_k_values, top_k_indices = torch.topk(x.abs(), int(alpha*x.numel()))
 
     # Create a new tensor filled with zeros
     compressed = torch.zeros_like(x)
