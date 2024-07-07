@@ -1,23 +1,21 @@
+"""
+Implementation of the MoTEF federated learning algorithm (https://arxiv.org/pdf/2405.20114)
+compare with document MoTEF_Alg.pdf
+part of the course work for optimization in machine learning
+"""
 import torch
 import torch.nn as nn
 import torch.distributed as dist
 import torch.multiprocessing as mp
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
+import torchvision
+import torchvision.transforms as transforms
 import time
 import os
 import networkx as nx
 import numpy as np
-
-class SimpleNN(nn.Module):
-    def __init__(self):
-        super(SimpleNN, self).__init__()
-        self.fc1 = nn.Linear(20, 50)
-        self.fc2 = nn.Linear(50, 2)
-    
-    def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+from model.resnet8 import ResNet8
+from compression_func.Top import top_k_compress
 
 def setup(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
@@ -69,12 +67,10 @@ def communicate_with_neighbors(rank, world_size, q_h_i, q_g_i, neighbors):
 
     return neighbor_states
 
-def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio, topology, erdos_renyi_prob):
+def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio, topology, p):
     setup(rank, world_size)
-
     device = torch.device('cpu')
     model = model.to(device)
-
     criterion = nn.CrossEntropyLoss()
 
     x = torch.zeros_like(torch.cat([p.data.view(-1) for p in model.parameters()]))
@@ -87,13 +83,17 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     q_h_i = torch.zeros_like(x)
     q_g_i = torch.zeros_like(x)
 
-    neighbors = get_neighbors(rank, world_size, topology, erdos_renyi_prob)
+    neighbors = get_neighbors(rank, world_size, topology, p)
     weights = torch.zeros(world_size, world_size)
     for neighbor in neighbors:
         weights[rank][neighbor] = 1.0 / len(neighbors)
     weights[rank][rank] = 1.0 / len(neighbors)
 
     start_time = time.time()
+    
+    ##############################################################
+    #                   start training routine                   #
+    ##############################################################
 
     for epoch in range(epochs):
         train_loader.sampler.set_epoch(epoch)
@@ -158,36 +158,36 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
     cleanup()
 
-def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio, topology, erdos_renyi_prob):
+def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio, topology, p):
     train_sampler = torch.utils.data.distributed.DistributedSampler(
         trainset, num_replicas=world_size, rank=rank, shuffle=True)
 
     train_loader = DataLoader(trainset, batch_size=64, num_workers=2, sampler=train_sampler)
     val_loader = DataLoader(valset, batch_size=64, shuffle=False)
 
-    motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio, topology, erdos_renyi_prob)
+    motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio, topology, p)
 
-def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio, topology, erdos_renyi_prob=0.5):
-    X_train = torch.randn(1000, 20)
-    y_train = torch.randint(0, 2, (1000,))
-    X_val = torch.randn(200, 20)
-    y_val = torch.randint(0, 2, (200,))
+def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio, topology, p=0.5):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
 
-    trainset = TensorDataset(X_train, y_train)
-    valset = TensorDataset(X_val, y_val)
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+    valset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-    model = SimpleNN()
+    model = ResNet8()
     model.share_memory()
 
     mp.spawn(
         worker_fn,
-        args=(world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio, topology, erdos_renyi_prob),
+        args=(world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio, topology, p),
         nprocs=world_size
     )
 
 if __name__ == "__main__":
     world_size = 3
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=10, gamma=0.01, eta=0.01, lambda_=0.9, com_ratio=0.2, topology='erdos-renyi', erdos_renyi_prob=0.5)
+    run_motef(world_size=world_size, epochs=10, gamma=0.01, eta=0.01, lambda_=0.9, com_ratio=0.2, topology='ring', p=0.5)
     total_time = time.time() - start_time
     print(f"Total execution time: {total_time:.2f}s")
