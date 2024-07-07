@@ -6,7 +6,7 @@ import torch
 # variables:
 #       K the number of entries to keep in the gradient
 #       x the gradient
-def top_k_compress(x, alpha=0.1):
+def top_k_compress(x, alpha):
     # Get the top k values and their indices
     top_k_values, top_k_indices = torch.topk(x.abs(), int(alpha*x.numel()))
 

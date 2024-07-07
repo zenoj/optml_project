@@ -104,8 +104,8 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
                           {"h": torch.zeros_like(x), "g": torch.zeros_like(x)},
                       right_neighbor:
                           {"h": torch.zeros_like(x), "g": torch.zeros_like(x)}}
-    weights = torch.empty(world_size, world_size)
-    nn.init.zeros_(weights)
+    weights = torch.tensor([[0.0, 0.5, 0.0, 0.5], [0.5, 0.0, 0.5, 0.0], [0.0, 0.5, 0.0, 0.5], [0.5, 0.0, 0.5, 0.0]])
+
     # TODO: fill weights with 1 ones for neighbors and keep 0 for the rest
 
     # time the experiment
@@ -122,7 +122,8 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
             # Receive q_h and q_g from neighbors
 
-            (q_h_i_left, q_h_i_right), (q_g_i_left, q_g_i_right) = communicate_with_neighbors(rank, world_size, q_h_i, q_g_i)
+            (q_h_i_left, q_h_i_right), (q_g_i_left, q_g_i_right) = communicate_with_neighbors(rank, world_size, q_h_i,
+                                                                                              q_g_i)
 
             # update local neighbor states
             neighborStates[left_neighbor]["h"] += q_h_i_left
@@ -167,10 +168,10 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             # Update model parameters with x
             param_shapes = [p.shape for p in model.parameters()]
             param_numels = [p.numel() for p in model.parameters()]
-
-            print(f"x norm: {x.norm().item()}, v norm: {v.norm().item()}")
-            print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
-            print(f"m norm: {m.norm().item()}, gradient norm: {grad.norm().item()}")
+            print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.6f}")
+            # print(f"x norm: {x.norm().item()}, v norm: {v.norm().item()}")
+            # print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
+            # print(f"m norm: {m.norm().item()}, gradient norm: {grad.norm().item()}")
 
             with torch.no_grad():
                 x_split = x.split(param_numels)
@@ -201,8 +202,6 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             f"Rank {rank}, Epoch {epoch + 1}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.2f}s")
 
         start_time = time.time()
-
-
 
     cleanup()
 
@@ -243,7 +242,7 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 if __name__ == "__main__":
     world_size = 3  # Number of nodes
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=10, gamma=0.01, eta=0.01, lambda_=0.9, com_ratio=0.2)
+    run_motef(world_size=world_size, epochs=10, gamma=0.001, eta=0.001, lambda_=0.9, com_ratio=0.5)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
     total_time = time.time() - start_time
