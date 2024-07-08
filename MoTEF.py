@@ -122,15 +122,15 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
             # Receive q_h and q_g from neighbors
 
-            (q_h_i_left, q_h_i_right), (q_g_i_left, q_g_i_right) = communicate_with_neighbors(rank, world_size, q_h_i,
+            (q_h_j_left, q_h_j_right), (q_g_j_left, q_g_j_right) = communicate_with_neighbors(rank, world_size, q_h_i,
                                                                                               q_g_i)
 
             # update local neighbor states
-            neighborStates[left_neighbor]["h"] += q_h_i_left
-            neighborStates[left_neighbor]["g"] += q_g_i_left
+            neighborStates[left_neighbor]["h"] += q_h_j_left
+            neighborStates[left_neighbor]["g"] += q_g_j_left
 
-            neighborStates[right_neighbor]["h"] += q_h_i_right
-            neighborStates[right_neighbor]["g"] += q_g_i_right
+            neighborStates[right_neighbor]["h"] += q_h_j_right
+            neighborStates[right_neighbor]["g"] += q_g_j_right
 
             # Update x
             weighted_diffs = [weights[rank][x] * (neighborStates[x]["h"] - h) for x in idxs_n]
@@ -148,11 +148,16 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             loss.backward()
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
-            # Print gradient statistics
-            print(f"Gradient norm: {grad.norm().item()}")
+            print(f"Unclipped Gradient norm: {grad.norm().item()}")
 
             # Gradient clipping
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.3)
+
+            grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
+            # Print gradient statistics
+            print(f"Clipped Gradient norm : {grad.norm().item()}")
+
+
 
             # Update m and v
             m_old = m.clone()
@@ -169,9 +174,8 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             param_shapes = [p.shape for p in model.parameters()]
             param_numels = [p.numel() for p in model.parameters()]
             print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.6f}")
-            # print(f"x norm: {x.norm().item()}, v norm: {v.norm().item()}")
-            # print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
-            # print(f"m norm: {m.norm().item()}, gradient norm: {grad.norm().item()}")
+            print(f"x norm: {x.norm().item()}, v norm: {v.norm().item()}")
+            print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
 
             with torch.no_grad():
                 x_split = x.split(param_numels)
@@ -240,9 +244,9 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 
 
 if __name__ == "__main__":
-    world_size = 3  # Number of nodes
+    world_size = 4 # Number of nodes
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=10, gamma=0.001, eta=0.001, lambda_=0.9, com_ratio=0.5)
+    run_motef(world_size=world_size, epochs=10, gamma=0.0005, eta=0.0005, lambda_=0.5, com_ratio=0.5)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
     total_time = time.time() - start_time
