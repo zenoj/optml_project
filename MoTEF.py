@@ -46,27 +46,35 @@ def communicate_with_neighbors(rank, world_size, q_h_i, q_g_i):
 
     # send q_h_i message to left neighbor async and receive from right neighbor sync
     req_send_left_q_h_i = dist.isend(q_h_i, dst=left_neighbor)
+    # print(f"{rank} send {q_h_i} to {left_neighbor}")
     req_recv_right_q_h_i = dist.recv(recv_right_q_h_i, src=right_neighbor)
+#     print(f"{rank} received {recv_right_q_h_i} from {right_neighbor}")
     req_send_left_q_h_i.wait()
 
     # send q_h_i message to right neighbor async and receive from left neighbor sync
     req_send_right_q_h_i = dist.isend(q_h_i, dst=right_neighbor)
+#     print(f"{rank} send {q_h_i} to {right_neighbor}")
     req_recv_left_q_h_i = dist.recv(recv_left_q_h_i, src=left_neighbor)
+#     print(f"{rank} received {recv_left_q_h_i} from {left_neighbor}")
     req_send_right_q_h_i.wait()
 
     # send q_g_i message to left neighbor async and receive from right neighbor sync
     req_send_left_q_g_i = dist.isend(q_g_i, dst=left_neighbor)
+#     print(f"{rank} send {q_g_i} to {left_neighbor}")
     req_recv_right_q_g_i = dist.recv(recv_right_q_g_i, src=right_neighbor)
+#     print(f"{rank} received {recv_right_q_g_i} from {right_neighbor}")
     req_send_left_q_g_i.wait()
 
     # send q_g_i message to right neighbor async and receive from left neighbor sync
     req_send_right_q_g_i = dist.isend(q_g_i, dst=right_neighbor)
+#     print(f"{rank} send {q_g_i} to {right_neighbor}")
     req_recv_left_q_g_i = dist.recv(recv_left_q_g_i, src=left_neighbor)
+#     print(f"{rank} received {recv_left_q_g_i} from {left_neighbor}")
     req_send_right_q_g_i.wait()
 
     dist.barrier()
-    return (req_recv_left_q_h_i,
-            req_recv_right_q_h_i), (req_recv_left_q_g_i, req_recv_right_q_g_i)
+    return (recv_left_q_h_i,
+            recv_right_q_h_i), (recv_left_q_g_i, recv_right_q_g_i)
 
 
 def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio):
@@ -102,10 +110,10 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     # Initialize local states
     x = torch.zeros_like(torch.cat([p.data.view(-1) for p in model.parameters()]))
     x = torch.randn_like(x) * 0.01
-    h = x
-    g = initGrad
-    v = initGrad
-    m = initGrad
+    h = x.clone()
+    g = initGrad.clone()
+    v = initGrad.clone()
+    m = initGrad.clone()
 
     q_h_i = torch.zeros_like(x)
     q_g_i = torch.zeros_like(x)
@@ -136,9 +144,8 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             data, target = data.to(device), target.to(device)
             if batch_idx != 0:
                 # Receive q_h and q_g from neighbors
-
                 (q_h_j_left, q_h_j_right), (q_g_j_left, q_g_j_right) = communicate_with_neighbors(rank, world_size, q_h_i,
-                                                                                                  q_g_i)
+                                                                                                        q_g_i)
 
                 # update local neighbor states
                 neighborStates[left_neighbor]["h"] += q_h_j_left
@@ -181,14 +188,14 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
-            print(f"Unclipped Gradient norm: {grad.norm().item()}")
+            # print(f"Unclipped Gradient norm: {grad.norm().item()}")
 
             # Gradient clipping
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.3)
 
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
             # Print gradient statistics
-            print(f"Clipped Gradient norm : {grad.norm().item()}")
+            # print(f"Clipped Gradient norm : {grad.norm().item()}")
 
             # Update m and v
             m_old = m.clone()
@@ -281,7 +288,7 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 if __name__ == "__main__":
     world_size = 4  # Number of nodes
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=5, gamma=0.001, eta=0.001, lambda_=0.5, com_ratio=0.5)
+    run_motef(world_size=world_size, epochs=5, gamma=0.1, eta=0.01, lambda_=0.6, com_ratio=0.8)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
     total_time = time.time() - start_time

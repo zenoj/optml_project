@@ -1,0 +1,137 @@
+2 send tensor([2.0448e-05, 0.0000e+00, 1.2812e-05,  ..., 7.0419e-05, 1.5109e-05,
+        3.3379e-05]) to 1
+1 send tensor([ 0.0000e+00,  0.0000e+00, -2.3643e-05,  ...,  3.2305e-05,
+         1.8934e-05,  0.0000e+00]) to 0
+1 received 2 from 2
+0 send tensor([-1.1530e-05, -1.2909e-05,  0.0000e+00,  ...,  4.6084e-05,
+         2.0261e-05, -4.7791e-05]) to 3
+1 send tensor([ 0.0000e+00,  0.0000e+00, -2.3643e-05,  ...,  3.2305e-05,
+         1.8934e-05,  0.0000e+00]) to 2
+0 received 1 from 1
+2 received 3 from 3
+3 send tensor([0.0000e+00, 0.0000e+00, 0.0000e+00,  ..., 6.5777e-05, 0.0000e+00,
+        0.0000e+00]) to 2
+2 send tensor([2.0448e-05, 0.0000e+00, 1.2812e-05,  ..., 7.0419e-05, 1.5109e-05,
+        3.3379e-05]) to 3
+3 received 0 from 0
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead05d0430> from 1
+1 received <torch.distributed.distributed_c10d.Work object at 0x7721304e8670> from 0
+3 send tensor([0.0000e+00, 0.0000e+00, 0.0000e+00,  ..., 6.5777e-05, 0.0000e+00,
+        0.0000e+00]) to 0
+0 send tensor([-1.1530e-05, -1.2909e-05,  0.0000e+00,  ...,  4.6084e-05,
+         2.0261e-05, -4.7791e-05]) to 1
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede6181b670> from 2
+1 send tensor([-0.0015, -0.0019, -0.0012,  ...,  0.0212,  0.0101, -0.0012]) to 0
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b74392258f0> from 3
+1 received 2 from 2
+3 send tensor([ 0.0000,  0.0011,  0.0037,  ...,  0.0203,  0.0104, -0.0018]) to 2
+0 send tensor([-0.0011,  0.0000,  0.0022,  ...,  0.0207,  0.0092,  0.0000]) to 3
+
+2 send tensor([ 0.0011, -0.0024,  0.0000,  ...,  0.0213,  0.0101,  0.0000]) to 1
+0 received 1 from 1
+2 received 3 from 3
+3 received 0 from 0
+0 send tensor([-0.0011,  0.0000,  0.0022,  ...,  0.0207,  0.0092,  0.0000]) to 1
+1 send tensor([-0.0015, -0.0019, -0.0012,  ...,  0.0212,  0.0101, -0.0012]) to 2
+2 send tensor([ 0.0011, -0.0024,  0.0000,  ...,  0.0213,  0.0101,  0.0000]) to 3
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b74392258f0> from 3
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead05d0430> from 1
+1 received <torch.distributed.distributed_c10d.Work object at 0x7721304e8670> from 0
+3 send tensor([ 0.0000,  0.0011,  0.0037,  ...,  0.0203,  0.0104, -0.0018]) to 0
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede6181b670> from 2
+3 send tensor([0.0010, 0.0010, 0.0010,  ..., 0.0010, 0.0000, 0.0000]) to 2
+3 received 0 from 0
+0 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0020, 0.0020, 0.0000]) to 3
+0 received 1 from 1
+1 send tensor([0.0000, 0.0010, 0.0000,  ..., 0.0010, 0.0010, 0.0000]) to 0
+0 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0020, 0.0020, 0.0000]) to 1
+1 received 2 from 2
+1 send tensor([0.0000, 0.0010, 0.0000,  ..., 0.0010, 0.0010, 0.0000]) to 2
+2 send tensor([0.0020, 0.0000, 0.0020,  ..., 0.0020, 0.0020, 0.0020]) to 1
+1 received <torch.distributed.distributed_c10d.Work object at 0x772134232bf0> from 0
+2 received 3 from 3
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b743922fe30> from 3
+2 send tensor([0.0020, 0.0000, 0.0020,  ..., 0.0020, 0.0020, 0.0020]) to 3
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead05d0ef0> from 1
+3 send tensor([0.0010, 0.0010, 0.0010,  ..., 0.0010, 0.0000, 0.0000]) to 0
+0 send tensor([ 0.0000,  0.0000,  0.0031,  ...,  0.0319,  0.0144, -0.0110]) to 3
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede61819170> from 2
+0 received 1 from 1
+1 send tensor([ 0.0000,  0.0000,  0.0000,  ...,  0.0155,  0.0217, -0.0270]) to 0
+1 received 2 from 2
+3 send tensor([0.0022, 0.0016, 0.0029,  ..., 0.0190, 0.0062, 0.0040]) to 2
+2 send tensor([0.0025, 0.0000, 0.0000,  ..., 0.0556, 0.0032, 0.0207]) to 1
+3 received 0 from 0
+1 send tensor([ 0.0000,  0.0000,  0.0000,  ...,  0.0155,  0.0217, -0.0270]) to 2
+2 received 3 from 3
+1 received <torch.distributed.distributed_c10d.Work object at 0x772134232bf0> from 0
+0 send tensor([ 0.0000,  0.0000,  0.0031,  ...,  0.0319,  0.0144, -0.0110]) to 1
+3 send tensor([0.0022, 0.0016, 0.0029,  ..., 0.0190, 0.0062, 0.0040]) to 0
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b743922fe30> from 3
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede61819170> from 2
+2 send tensor([0.0025, 0.0000, 0.0000,  ..., 0.0556, 0.0032, 0.0207]) to 3
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead05d0ef0> from 1
+1 send tensor([0.0030, 0.0000, 0.0030,  ..., 0.0000, 0.0000, 0.0030]) to 0
+0 send tensor([0.0060, 0.0060, 0.0060,  ..., 0.0000, 0.0000, 0.0059]) to 3
+0 received 1 from 1
+1 received 2 from 2
+2 send tensor([0.0000, 0.0060, 0.0000,  ..., 0.0000, 0.0000, 0.0000]) to 1
+1 send tensor([0.0030, 0.0000, 0.0030,  ..., 0.0000, 0.0000, 0.0030]) to 2
+2 received 3 from 3
+2 send tensor([0.0000, 0.0060, 0.0000,  ..., 0.0000, 0.0000, 0.0000]) to 3
+3 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0000, 0.0030, 0.0030]) to 2
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead86f90f0> from 1
+3 received 0 from 0
+1 received <torch.distributed.distributed_c10d.Work object at 0x7721370d0430> from 0
+1 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0093, 0.0000, 0.0349]) to 03 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0000, 0.0030, 0.0030]) to 0
+
+0 send tensor([0.0060, 0.0060, 0.0060,  ..., 0.0000, 0.0000, 0.0059]) to 1
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b74395d45b0> from 3
+1 received 2 from 2
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede6181b830> from 2
+2 send tensor([0.0000, 0.0000, 0.0050,  ..., 0.0152, 0.0000, 0.0136]) to 1
+0 send tensor([ 0.0052,  0.0048,  0.0046,  ...,  0.0072, -0.0094,  0.0000]) to 3
+3 send tensor([ 0.0022,  0.0023,  0.0029,  ...,  0.0188,  0.0046, -0.0200]) to 2
+2 received 3 from 3
+0 received 1 from 1
+1 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0093, 0.0000, 0.0349]) to 22 send tensor([0.0000, 0.0000, 0.0050,  ..., 0.0152, 0.0000, 0.0136]) to 3
+
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead86f90f0> from 1
+3 received 0 from 0
+1 received <torch.distributed.distributed_c10d.Work object at 0x7721370d0430> from 0
+3 send tensor([ 0.0022,  0.0023,  0.0029,  ...,  0.0188,  0.0046, -0.0200]) to 0
+0 send tensor([ 0.0052,  0.0048,  0.0046,  ...,  0.0072, -0.0094,  0.0000]) to 1
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede6181b830> from 2
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b74395d45b0> from 3
+2 send tensor([0.0100, 0.0000, 0.0100,  ..., 0.0100, 0.0100, 0.0100]) to 1
+2 received 3 from 3
+3 send tensor([0.0050, 0.0050, 0.0050,  ..., 0.0050, 0.0000, 0.0000]) to 2
+1 send tensor([0.0000, 0.0050, 0.0000,  ..., 0.0050, 0.0050, 0.0000]) to 0
+1 received 2 from 2
+2 send tensor([0.0100, 0.0000, 0.0100,  ..., 0.0100, 0.0100, 0.0100]) to 3
+3 received 0 from 0
+3 send tensor([0.0050, 0.0050, 0.0050,  ..., 0.0050, 0.0000, 0.0000]) to 0
+0 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0100, 0.0100, 0.0000]) to 3
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede6181b470> from 2
+0 received 1 from 1
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead05d00b0> from 1
+0 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0100, 0.0100, 0.0000]) to 1
+1 send tensor([0.0000, 0.0050, 0.0000,  ..., 0.0050, 0.0050, 0.0000]) to 2
+2 send tensor([0.0104, 0.0099, 0.0000,  ..., 0.0156, 0.0109, 0.0108]) to 1
+1 received <torch.distributed.distributed_c10d.Work object at 0x772134233d30> from 0
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b743922fe30> from 3
+1 send tensor([ 0.0047,  0.0043,  0.0050,  ...,  0.0000,  0.0146, -0.0274]) to 0
+0 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0115, 0.0110, 0.0000]) to 3
+3 send tensor([0.0000, 0.0000, 0.0035,  ..., 0.0036, 0.0199, 0.0115]) to 2
+1 received 2 from 2
+0 received 1 from 1
+3 received 0 from 02 received 3 from 3
+
+1 send tensor([ 0.0047,  0.0043,  0.0050,  ...,  0.0000,  0.0146, -0.0274]) to 2
+0 send tensor([0.0000, 0.0000, 0.0000,  ..., 0.0115, 0.0110, 0.0000]) to 1
+3 send tensor([0.0000, 0.0000, 0.0035,  ..., 0.0036, 0.0199, 0.0115]) to 0
+2 send tensor([0.0104, 0.0099, 0.0000,  ..., 0.0156, 0.0109, 0.0108]) to 3
+0 received <torch.distributed.distributed_c10d.Work object at 0x7b743922fe30> from 3
+1 received <torch.distributed.distributed_c10d.Work object at 0x772134233d30> from 0
+2 received <torch.distributed.distributed_c10d.Work object at 0x7bead05d00b0> from 1
+3 received <torch.distributed.distributed_c10d.Work object at 0x7ede6181b470> from 2
