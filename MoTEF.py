@@ -82,16 +82,30 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     # else:
     #     device = torch.device("cpu")
     model = model.to(device)
-
+    (data, target) = next(iter(train_loader))
     criterion = nn.CrossEntropyLoss()
+    # Compute loss
+    model.zero_grad()
+    output = model(data)
+    loss = criterion(output, target)
+
+    # # Add L2 penalty (weight decay)
+    # weight_decay = 0.0001
+    # l2_reg = torch.tensor(0., device=device)
+    # for param in model.parameters():
+    #     l2_reg += torch.norm(param) ** 2
+    # loss += weight_decay * l2_reg / 2
+    loss.backward()
+
+    initGrad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
     # Initialize local states
     x = torch.zeros_like(torch.cat([p.data.view(-1) for p in model.parameters()]))
     x = torch.randn_like(x) * 0.01
-    h = torch.randn_like(x) * 0.01
-    g = torch.randn_like(x) * 0.01
-    v = torch.randn_like(x) * 0.01
-    m = torch.randn_like(x) * 0.01
+    h = x
+    g = initGrad
+    v = initGrad
+    m = initGrad
 
     q_h_i = torch.zeros_like(x)
     q_g_i = torch.zeros_like(x)
@@ -104,9 +118,10 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
                           {"h": torch.zeros_like(x), "g": torch.zeros_like(x)},
                       right_neighbor:
                           {"h": torch.zeros_like(x), "g": torch.zeros_like(x)}}
-    weights = torch.tensor([[0.0, 0.5, 0.0, 0.5], [0.5, 0.0, 0.5, 0.0], [0.0, 0.5, 0.0, 0.5], [0.5, 0.0, 0.5, 0.0]])
-
-    # TODO: fill weights with 1 ones for neighbors and keep 0 for the rest
+    weights = torch.tensor([[0.0, 0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5, 0.0],
+                            [0.0, 0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5, 0.0]])
 
     # time the experiment
     start_time = time.time()
@@ -119,33 +134,51 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
         model.train()
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
+            if batch_idx != 0:
+                # Receive q_h and q_g from neighbors
 
-            # Receive q_h and q_g from neighbors
+                (q_h_j_left, q_h_j_right), (q_g_j_left, q_g_j_right) = communicate_with_neighbors(rank, world_size, q_h_i,
+                                                                                                  q_g_i)
 
-            (q_h_j_left, q_h_j_right), (q_g_j_left, q_g_j_right) = communicate_with_neighbors(rank, world_size, q_h_i,
-                                                                                              q_g_i)
+                # update local neighbor states
+                neighborStates[left_neighbor]["h"] += q_h_j_left
+                neighborStates[left_neighbor]["g"] += q_g_j_left
 
-            # update local neighbor states
-            neighborStates[left_neighbor]["h"] += q_h_j_left
-            neighborStates[left_neighbor]["g"] += q_g_j_left
-
-            neighborStates[right_neighbor]["h"] += q_h_j_right
-            neighborStates[right_neighbor]["g"] += q_g_j_right
+                neighborStates[right_neighbor]["h"] += q_h_j_right
+                neighborStates[right_neighbor]["g"] += q_g_j_right
 
             # Update x
             weighted_diffs = [weights[rank][x] * (neighborStates[x]["h"] - h) for x in idxs_n]
             mixing = sum(weighted_diffs)
             x += gamma * mixing - eta * v
 
+            # Update model parameters with x
+            param_shapes = [p.shape for p in model.parameters()]
+            param_numels = [p.numel() for p in model.parameters()]
+
+            with torch.no_grad():
+                x_split = x.split(param_numels)
+                for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
+                    param.data = x_i.view(shape)
             # Compute q_h
             q_h_i = top_k_compress((x - h), com_ratio)
             h += q_h_i
 
             # Compute gradient
+
+            # Compute loss
             model.zero_grad()
             output = model(data)
             loss = criterion(output, target)
+
+            # # Add L2 penalty (weight decay)
+            # weight_decay = 0.0001
+            # l2_reg = torch.tensor(0., device=device)
+            # for param in model.parameters():
+            #     l2_reg += torch.norm(param) ** 2
+            # loss += weight_decay * l2_reg / 2
             loss.backward()
+
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
             print(f"Unclipped Gradient norm: {grad.norm().item()}")
@@ -156,8 +189,6 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
             # Print gradient statistics
             print(f"Clipped Gradient norm : {grad.norm().item()}")
-
-
 
             # Update m and v
             m_old = m.clone()
@@ -170,17 +201,10 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             q_g_i = top_k_compress((v - g), com_ratio)
             g += q_g_i
 
-            # Update model parameters with x
-            param_shapes = [p.shape for p in model.parameters()]
-            param_numels = [p.numel() for p in model.parameters()]
+            # print stats
             print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.6f}")
             print(f"x norm: {x.norm().item()}, v norm: {v.norm().item()}")
             print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
-
-            with torch.no_grad():
-                x_split = x.split(param_numels)
-                for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
-                    param.data = x_i.view(shape)
 
         # Evaluate on validation set
         model.eval()
@@ -214,39 +238,50 @@ def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lam
     train_sampler = torch.utils.data.distributed.DistributedSampler(
         trainset, num_replicas=world_size, rank=rank, shuffle=True)
 
-    train_loader = DataLoader(trainset, batch_size=64,
+    train_loader = DataLoader(trainset, batch_size=128,
                               num_workers=2, sampler=train_sampler)
 
-    val_loader = DataLoader(valset, batch_size=64, shuffle=False)
+    val_loader = DataLoader(valset, batch_size=128, shuffle=False)
 
     motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio)
 
 
 def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
+    # transform_train = transforms.Compose([
+    #     # transforms.RandomCrop(32, padding=4),
+    #     # transforms.RandomHorizontalFlip(),
+    #     transforms.ToTensor(),
+    #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    # ])
+    #
+    # transform_test = transforms.Compose([
+    #     transforms.ToTensor(),
+    #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    # ])
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Normalize((0.1307,), (0.3081,))
     ])
 
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-    valset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+    train_set = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    val_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 
-    model = ResNet8()
+    model = ResNet8(10)
     # model = ResNet8().cpu()
 
     model.share_memory()
 
     mp.spawn(
         worker_fn,
-        args=(world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio),
+        args=(world_size, model, train_set, val_set, epochs, gamma, eta, lambda_, com_ratio),
         nprocs=world_size
     )
 
 
 if __name__ == "__main__":
-    world_size = 4 # Number of nodes
+    world_size = 4  # Number of nodes
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=10, gamma=0.0005, eta=0.0005, lambda_=0.5, com_ratio=0.5)
+    run_motef(world_size=world_size, epochs=5, gamma=0.001, eta=0.001, lambda_=0.5, com_ratio=0.5)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
     total_time = time.time() - start_time

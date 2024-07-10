@@ -27,10 +27,21 @@ class BasicBlock(nn.Module):
 
 
 class ResNet8(nn.Module):
+    # cifar10
+    # def __init__(self, num_classes=10):
+    #     super(ResNet8, self).__init__()
+    #     self.in_channels = 16
+    #     self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+    #     self.bn1 = nn.BatchNorm2d(16)
+    #     self.layer1 = self._make_layer(16, 2, stride=1)
+    #     self.layer2 = self._make_layer(32, 2, stride=1)
+    #     self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+    #     self.fc = nn.Linear(32, num_classes)
     def __init__(self, num_classes=10):
         super(ResNet8, self).__init__()
         self.in_channels = 16
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        # Change input channels from 3 to 1
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
         self.layer1 = self._make_layer(16, 2, stride=1)
         self.layer2 = self._make_layer(32, 2, stride=1)
