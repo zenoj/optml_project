@@ -4,8 +4,9 @@ import torch
 # Top_K_Compressor proposed by stich et al: https://arxiv.org/pdf/1809.07599
 # It acts on the input by preserving K largest entries by magnitude while zeroing out the rest
 # variables:
-#       K the number of entries to keep in the gradient
 #       x the gradient
+#       alpha the percentage of entries to keep in the gradient
+#
 def top_k_compress(x, alpha):
     # Get the top k values and their indices
     top_k_values, top_k_indices = torch.topk(x.abs(), int(alpha*x.numel()))

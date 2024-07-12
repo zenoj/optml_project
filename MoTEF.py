@@ -191,7 +191,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             # print(f"Unclipped Gradient norm: {grad.norm().item()}")
 
             # Gradient clipping
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.3)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5)
 
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
             # Print gradient statistics
@@ -288,7 +288,14 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 if __name__ == "__main__":
     world_size = 4  # Number of nodes
     start_time = time.time()
-    run_motef(world_size=world_size, epochs=5, gamma=0.1, eta=0.01, lambda_=0.6, com_ratio=0.8)
+    ep = 5
+    gam = 0.05
+    et = 0.0001
+    lbd = 0.9
+    com = 0.2
+    print(f"gamma={gam}, eta={et}, lambda_={lbd}, com_ratio={com}")
+
+    run_motef(world_size=world_size, epochs=ep, gamma=gam, eta=et, lambda_=lbd, com_ratio=com)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
     total_time = time.time() - start_time
