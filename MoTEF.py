@@ -3,19 +3,19 @@ implementation of the MoTEF federated learning algorithm (https://arxiv.org/pdf/
 compare with document MoTEF_Alg.pdf
 part of the course work for optmization in machine learning
 """
-from model.resnet8 import *
+# from model.resnet18 import *
+from model.simpleMLP import *
 import torch
-import torch.nn as nn
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
 from compression_func.Top import top_k_compress
-
+from torchvision.models import resnet18
+from torch import nn
 import time
 
-model = ResNet8()
 
 import os
 
@@ -179,7 +179,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             loss = criterion(output, target)
 
             # # Add L2 penalty (weight decay)
-            # weight_decay = 0.0001
+            # weight_decay = 0.01
             # l2_reg = torch.tensor(0., device=device)
             # for param in model.parameters():
             #     l2_reg += torch.norm(param) ** 2
@@ -188,10 +188,10 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
-            # print(f"Unclipped Gradient norm: {grad.norm().item()}")
+            print(f"Unclipped Gradient norm: {grad.norm().item()}")
 
             # Gradient clipping
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
 
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
             # Print gradient statistics
@@ -241,6 +241,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     cleanup()
 
 
+
 def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio):
     train_sampler = torch.utils.data.distributed.DistributedSampler(
         trainset, num_replicas=world_size, rank=rank, shuffle=True)
@@ -254,27 +255,16 @@ def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lam
 
 
 def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
-    # transform_train = transforms.Compose([
-    #     # transforms.RandomCrop(32, padding=4),
-    #     # transforms.RandomHorizontalFlip(),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    # ])
-    #
-    # transform_test = transforms.Compose([
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    # ])
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
 
+
     train_set = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     val_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 
-    model = ResNet8(10)
-    # model = ResNet8().cpu()
+    model = MLP()
 
     model.share_memory()
 
@@ -288,12 +278,15 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 if __name__ == "__main__":
     world_size = 4  # Number of nodes
     start_time = time.time()
-    ep = 5
-    gam = 0.05
-    et = 0.0001
+    ep = 10
+    gam = 0.001
+    et = 0.03
     lbd = 0.9
     com = 0.2
     print(f"gamma={gam}, eta={et}, lambda_={lbd}, com_ratio={com}")
+    # gammas = [0.2, 0.1, 0.01, 0.001, 0.0001]
+    # etas = [0.1, 0.01, 0.001, 0.0001]
+    # for
 
     run_motef(world_size=world_size, epochs=ep, gamma=gam, eta=et, lambda_=lbd, com_ratio=com)
     # if torch.cuda.is_available():
