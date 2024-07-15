@@ -107,6 +107,8 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
     for epoch in range(epochs):
         train_loader.sampler.set_epoch(epoch)
         model.train()
+        old_grad = initGrad.clone()
+
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
             if batch_idx != 0:
@@ -126,14 +128,6 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
             mixing = sum(weighted_diffs)
             x += gamma * mixing - eta * v
 
-            # Update model parameters with x
-            param_shapes = [p.shape for p in model.parameters()]
-            param_numels = [p.numel() for p in model.parameters()]
-
-            with torch.no_grad():
-                x_split = x.split(param_numels)
-                for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
-                    param.data = x_i.view(shape)
             # Compute q_h
             q_h_i = top_k_compress((x - h), com_ratio)
             h += q_h_i
@@ -143,29 +137,44 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
             output = model(data)
             loss = criterion(output, target)
             loss.backward()
+            old_grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
+            old_grad = old_grad.clone()
+            # Update model parameters with x
+            param_shapes = [p.shape for p in model.parameters()]
+            param_numels = [p.numel() for p in model.parameters()]
 
-            grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
+            with torch.no_grad():
+                x_split = x.split(param_numels)
+                for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
+                    param.data = x_i.view(shape)
 
-            # Gradient clipping
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
+            # Compute gradient
+            model.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+
+
+            new_grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
             # Print gradient statistics
-            print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Weights norm: {[p.data.norm().item() for p in model.parameters()]}")
+            # print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Weights norm: {[p.data.norm().item() for p in model.parameters()]}")
 
 
             # Update v
             weighted_diffs_grad = [weights[rank][x] * (neighborStates[x]["g"] - g) for x in idxs_n]
             grad_mixing = sum(weighted_diffs_grad)
-            v = grad_mixing + grad
+            v += gamma * grad_mixing + new_grad - old_grad
 
             # Compute q_g
-            q_g_i = top_k_compress((g - grad), com_ratio)
+            q_g_i = top_k_compress((v - g), com_ratio)
             g += q_g_i
 
-            # Print stats
-            print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.6f}")
-            print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, x norm: {x.norm().item()}, v norm: {v.norm().item()}")
-            print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, h norm: {h.norm().item()}, g norm: {g.norm().item()}")
+            # print stats
+            if batch_idx % 10 == 0:
+                print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.6f}")
+                print(f"x norm: {x.norm().item()}, updateSize: {v.norm().item() * eta}")
+                print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
 
         # Validation phase
         model.eval()
