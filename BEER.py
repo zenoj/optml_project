@@ -123,10 +123,26 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
                 neighborStates[right_neighbor]["h"] += q_h_j_right
                 neighborStates[right_neighbor]["g"] += q_g_j_right
 
+            # Compute gradient
+            model.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            old_grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
+            old_grad = old_grad.clone()
+
             # Update x
             weighted_diffs = [weights[rank][x] * (neighborStates[x]["h"] - h) for x in idxs_n]
             mixing = sum(weighted_diffs)
             x += gamma * mixing - eta * v
+
+            # Update model parameters with x
+            param_shapes = [p.shape for p in model.parameters()]
+            param_numels = [p.numel() for p in model.parameters()]
+            with torch.no_grad():
+                x_split = x.split(param_numels)
+                for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
+                    param.data = x_i.view(shape)
 
             # Compute q_h
             q_h_i = top_k_compress((x - h), com_ratio)
@@ -137,26 +153,9 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
             output = model(data)
             loss = criterion(output, target)
             loss.backward()
-            old_grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
-            old_grad = old_grad.clone()
-            # Update model parameters with x
-            param_shapes = [p.shape for p in model.parameters()]
-            param_numels = [p.numel() for p in model.parameters()]
-
-            with torch.no_grad():
-                x_split = x.split(param_numels)
-                for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
-                    param.data = x_i.view(shape)
-
-            # Compute gradient
-            model.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
-            loss.backward()
-
 
             new_grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
-
+            # print(f"new gradient: {new_grad.norm().item()} old gradient: {old_grad.norm().item()}")
             # Print gradient statistics
             # print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Weights norm: {[p.data.norm().item() for p in model.parameters()]}")
 
