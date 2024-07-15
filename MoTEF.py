@@ -3,6 +3,8 @@ implementation of the MoTEF federated learning algorithm (https://arxiv.org/pdf/
 compare with document MoTEF_Alg.pdf
 part of the course work for optmization in machine learning
 """
+import itertools
+
 # from model.resnet18 import *
 from model.simpleMLP import *
 import torch
@@ -188,8 +190,6 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
             grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
 
-            print(f"Unclipped Gradient norm: {grad.norm().item()}")
-
             # Gradient clipping
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
 
@@ -209,9 +209,10 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             g += q_g_i
 
             # print stats
-            print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.6f}")
-            print(f"x norm: {x.norm().item()}, v norm: {v.norm().item()}")
-            print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
+            if batch_idx % 10 == 0:
+                print(f"Rank {rank}, Epoch {epoch + 1}, Batch {batch_idx}, Loss: {loss.item():.6f}")
+                print(f"x norm: {x.norm().item()}, updateSize: {v.norm().item() * eta}")
+                print(f"h norm: {h.norm().item()}, g norm: {g.norm().item()}")
 
         # Evaluate on validation set
         model.eval()
@@ -277,19 +278,21 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 
 if __name__ == "__main__":
     world_size = 4  # Number of nodes
-    start_time = time.time()
-    ep = 10
-    gam = 0.001
-    et = 0.03
-    lbd = 0.9
-    com = 0.2
-    print(f"gamma={gam}, eta={et}, lambda_={lbd}, com_ratio={com}")
-    # gammas = [0.2, 0.1, 0.01, 0.001, 0.0001]
-    # etas = [0.1, 0.01, 0.001, 0.0001]
-    # for
+    ep = 12
+    coms = [0.2]
+    gammas = [0.001]
+    etas = [0.03]
+    lbds = [0.9]
+    gammas_fine = []
+    etas_fine = []
+    lbds_fine = [0.99, 0.7, 0.3, 0.01]
+    for gam, et, lbd, com in itertools.product(gammas, etas, lbds, coms):
+        print(f"gamma={gam}, eta={et}, lambda_={lbd}, com_ratio={com}")
+        start_time = time.time()
+        run_motef(world_size=world_size, epochs=ep, gamma=gam, eta=et, lambda_=lbd, com_ratio=com)
+        total_time = time.time() - start_time
+        print(f"Total execution time: {total_time:.2f}s")
 
-    run_motef(world_size=world_size, epochs=ep, gamma=gam, eta=et, lambda_=lbd, com_ratio=com)
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
-    total_time = time.time() - start_time
-    print(f"Total execution time: {total_time:.2f}s")
+
