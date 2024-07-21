@@ -1,0 +1,32 @@
+Rank 2, Epoch 1, Val Loss: 2.2907, Val Acc: 0.2091, Time: 90.79s
+Rank 1, Epoch 1, Val Loss: 2.2906, Val Acc: 0.2044, Time: 90.72s
+Rank 0, Epoch 1, Val Loss: 2.2936, Val Acc: 0.1138, Time: 90.80s
+Rank 2, Epoch 2, Val Loss: 1.8780, Val Acc: 0.3867, Time: 90.85s
+Rank 1, Epoch 2, Val Loss: 1.9174, Val Acc: 0.3950, Time: 91.24s
+Rank 0, Epoch 2, Val Loss: 2.0606, Val Acc: 0.4017, Time: 91.34s
+Rank 1, Epoch 3, Val Loss: 0.8114, Val Acc: 0.7247, Time: 89.51s
+Rank 2, Epoch 3, Val Loss: 0.8290, Val Acc: 0.7231, Time: 90.67s
+Rank 0, Epoch 3, Val Loss: 0.8316, Val Acc: 0.7440, Time: 90.12s
+Rank 1, Epoch 4, Val Loss: 0.6167, Val Acc: 0.8156, Time: 88.11s
+Rank 2, Epoch 4, Val Loss: 0.6318, Val Acc: 0.8031, Time: 87.61s
+Rank 0, Epoch 4, Val Loss: 0.6222, Val Acc: 0.8130, Time: 87.55s
+Rank 0, Epoch 5, Val Loss: 0.5229, Val Acc: 0.8424, Time: 103.04s
+Rank 2, Epoch 5, Val Loss: 0.5618, Val Acc: 0.8244, Time: 103.10s
+Rank 1, Epoch 5, Val Loss: 0.5506, Val Acc: 0.8302, Time: 103.44s
+Rank 0, Epoch 6, Val Loss: 0.4973, Val Acc: 0.8496, Time: 86.74s
+Rank 2, Epoch 6, Val Loss: 0.5645, Val Acc: 0.8217, Time: 86.92s
+Rank 1, Epoch 6, Val Loss: 0.5680, Val Acc: 0.8315, Time: 87.00s
+Rank 1, Epoch 7, Val Loss: 0.8231, Val Acc: 0.7518, Time: 83.14s
+Rank 0, Epoch 7, Val Loss: 0.5947, Val Acc: 0.8286, Time: 84.21s
+Rank 2, Epoch 7, Val Loss: 0.7194, Val Acc: 0.7898, Time: 84.06s
+Rank 2, Epoch 8, Val Loss: 1.5075, Val Acc: 0.6784, Time: 93.90s
+Rank 1, Epoch 8, Val Loss: 1.3809, Val Acc: 0.6880, Time: 95.05s
+Rank 0, Epoch 8, Val Loss: 1.0688, Val Acc: 0.7478, Time: 94.46s
+Rank 1, Epoch 9, Val Loss: 3.0688, Val Acc: 0.5818, Time: 101.10s
+Rank 0, Epoch 9, Val Loss: 2.1566, Val Acc: 0.7058, Time: 101.23s
+Rank 2, Epoch 9, Val Loss: 4.7371, Val Acc: 0.5477, Time: 101.84s
+Rank 2, Epoch 10, Val Loss: 20.3711, Val Acc: 0.3840, Time: 81.35s
+Rank 0, Epoch 10, Val Loss: 5.1828, Val Acc: 0.6241, Time: 81.54s
+Rank 1, Epoch 10, Val Loss: 9.6144, Val Acc: 0.4657, Time: 81.82s
+Total execution time: 918.45s
+

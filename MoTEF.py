@@ -13,11 +13,10 @@ import torch.multiprocessing as mp
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
-from compression_func.Top import top_k_compress
+from compression_ops import uniform_quantize, comp_func, random_k_compression
 from torchvision.models import resnet18
 from torch import nn
 import time
-
 
 import os
 
@@ -50,28 +49,28 @@ def communicate_with_neighbors(rank, world_size, q_h_i, q_g_i):
     req_send_left_q_h_i = dist.isend(q_h_i, dst=left_neighbor)
     # print(f"{rank} send {q_h_i} to {left_neighbor}")
     req_recv_right_q_h_i = dist.recv(recv_right_q_h_i, src=right_neighbor)
-#     print(f"{rank} received {recv_right_q_h_i} from {right_neighbor}")
+    #     print(f"{rank} received {recv_right_q_h_i} from {right_neighbor}")
     req_send_left_q_h_i.wait()
 
     # send q_h_i message to right neighbor async and receive from left neighbor sync
     req_send_right_q_h_i = dist.isend(q_h_i, dst=right_neighbor)
-#     print(f"{rank} send {q_h_i} to {right_neighbor}")
+    #     print(f"{rank} send {q_h_i} to {right_neighbor}")
     req_recv_left_q_h_i = dist.recv(recv_left_q_h_i, src=left_neighbor)
-#     print(f"{rank} received {recv_left_q_h_i} from {left_neighbor}")
+    #     print(f"{rank} received {recv_left_q_h_i} from {left_neighbor}")
     req_send_right_q_h_i.wait()
 
     # send q_g_i message to left neighbor async and receive from right neighbor sync
     req_send_left_q_g_i = dist.isend(q_g_i, dst=left_neighbor)
-#     print(f"{rank} send {q_g_i} to {left_neighbor}")
+    #     print(f"{rank} send {q_g_i} to {left_neighbor}")
     req_recv_right_q_g_i = dist.recv(recv_right_q_g_i, src=right_neighbor)
-#     print(f"{rank} received {recv_right_q_g_i} from {right_neighbor}")
+    #     print(f"{rank} received {recv_right_q_g_i} from {right_neighbor}")
     req_send_left_q_g_i.wait()
 
     # send q_g_i message to right neighbor async and receive from left neighbor sync
     req_send_right_q_g_i = dist.isend(q_g_i, dst=right_neighbor)
-#     print(f"{rank} send {q_g_i} to {right_neighbor}")
+    #     print(f"{rank} send {q_g_i} to {right_neighbor}")
     req_recv_left_q_g_i = dist.recv(recv_left_q_g_i, src=left_neighbor)
-#     print(f"{rank} received {recv_left_q_g_i} from {left_neighbor}")
+    #     print(f"{rank} received {recv_left_q_g_i} from {left_neighbor}")
     req_send_right_q_g_i.wait()
 
     dist.barrier()
@@ -79,7 +78,7 @@ def communicate_with_neighbors(rank, world_size, q_h_i, q_g_i):
             recv_right_q_h_i), (recv_left_q_g_i, recv_right_q_g_i)
 
 
-def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio):
+def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio, com_func):
     setup(rank, world_size)
 
     # num_gpus = torch.cuda.device_count()
@@ -128,10 +127,19 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
                           {"h": torch.zeros_like(x), "g": torch.zeros_like(x)},
                       right_neighbor:
                           {"h": torch.zeros_like(x), "g": torch.zeros_like(x)}}
-    weights = torch.tensor([[0.0, 0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5, 0.0],
-                            [0.0, 0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5, 0.0]])
+    # weights = torch.tensor([[0.0, 0.5, 0.0, 0.5],
+    #                         [0.5, 0.0, 0.5, 0.0],
+    #                         [0.0, 0.5, 0.0, 0.5],
+    #                         [0.5, 0.0, 0.5, 0.0]])
+    # weights = torch.tensor([[0.0, 0.5, 0.5],
+    #                         [0.5, 0.0, 0.5],
+    #                         [0.5, 0.5, 0.0]])
+    weights = torch.tensor([[0.0, 0.5, 0.0, 0.0, 0.0, 0.5],
+                            [0.5, 0.0, 0.5, 0.0, 0.0, 0.0],
+                            [0.0, 0.5, 0.0, 0.5, 0.0, 0.0],
+                            [0.0, 0.0, 0.5, 0.0, 0.5, 0.0],
+                            [0.0, 0.0, 0.0, 0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.0, 0.0, 0.5, 0.0]])
 
     # time the experiment
     start_time = time.time()
@@ -146,8 +154,9 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             data, target = data.to(device), target.to(device)
             if batch_idx != 0:
                 # Receive q_h and q_g from neighbors
-                (q_h_j_left, q_h_j_right), (q_g_j_left, q_g_j_right) = communicate_with_neighbors(rank, world_size, q_h_i,
-                                                                                                        q_g_i)
+                (q_h_j_left, q_h_j_right), (q_g_j_left, q_g_j_right) = communicate_with_neighbors(rank, world_size,
+                                                                                                  q_h_i,
+                                                                                                  q_g_i)
 
                 # update local neighbor states
                 neighborStates[left_neighbor]["h"] += q_h_j_left
@@ -170,7 +179,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
                 for param, x_i, shape in zip(model.parameters(), x_split, param_shapes):
                     param.data = x_i.view(shape)
             # Compute q_h
-            q_h_i = top_k_compress((x - h), com_ratio)
+            q_h_i = com_func((x - h), com_ratio)
             h += q_h_i
 
             # Compute gradient
@@ -205,7 +214,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
             v += gamma * mixing_glob_grad + m - m_old
 
             # Compute q_g
-            q_g_i = top_k_compress((v - g), com_ratio)
+            q_g_i = com_func((v - g), com_ratio)
             g += q_g_i
 
             # print stats
@@ -242,25 +251,18 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     cleanup()
 
 
-
-def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio):
-    train_sampler = torch.utils.data.distributed.DistributedSampler(
-        trainset, num_replicas=world_size, rank=rank, shuffle=True)
-
-    train_loader = DataLoader(trainset, batch_size=128,
-                              num_workers=2, sampler=train_sampler)
-
+def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, com_ratio, com_func):
+    train_sampler = torch.utils.data.distributed.DistributedSampler(trainset, num_replicas=world_size, rank=rank, shuffle=True)
+    train_loader = DataLoader(trainset, batch_size=128, num_workers=2, sampler=train_sampler)
     val_loader = DataLoader(valset, batch_size=128, shuffle=False)
+    motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio, com_func)
 
-    motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma, eta, lambda_, com_ratio)
 
-
-def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
+def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio, com_func):
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
-
 
     train_set = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     val_set = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
@@ -271,28 +273,29 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, com_ratio):
 
     mp.spawn(
         worker_fn,
-        args=(world_size, model, train_set, val_set, epochs, gamma, eta, lambda_, com_ratio),
+        args=(world_size, model, train_set, val_set, epochs, gamma, eta, lambda_, com_ratio, com_func),
         nprocs=world_size
     )
 
 
 if __name__ == "__main__":
-    world_size = 4  # Number of nodes
-    ep = 12
+    com_func = random_k_compression
+    comstring = ("random_k")
+    world_size = 6  # Number of nodes
+    ep = 10
     coms = [0.2]
     gammas = [0.001]
     etas = [0.03]
     lbds = [0.9]
     gammas_fine = []
     etas_fine = []
-    lbds_fine = [0.99, 0.7, 0.3, 0.01]
-    for gam, et, lbd, com in itertools.product(gammas, etas, lbds, coms):
-        print(f"gamma={gam}, eta={et}, lambda_={lbd}, com_ratio={com}")
+    lbds_fine = [0.99, 0.9, 0.1, 0.01]
+    for gam, et, lbd, com in itertools.product(gammas, etas, lbds_fine, coms):
+        print(f"gamma={gam}, eta={et}, lambda_={lbd}, com_ratio={com}, compression_func={comstring}")
         start_time = time.time()
-        run_motef(world_size=world_size, epochs=ep, gamma=gam, eta=et, lambda_=lbd, com_ratio=com)
+        run_motef(world_size=world_size, epochs=ep, gamma=gam, eta=et, lambda_=lbd, com_ratio=com, com_func=com_func)
         total_time = time.time() - start_time
         print(f"Total execution time: {total_time:.2f}s")
 
     # if torch.cuda.is_available():
     #     torch.cuda.synchronize()
-
