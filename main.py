@@ -21,7 +21,9 @@ import time
 import os
 import networkx as nx
 
+from optimizers import *
 from optimizers.Motef import MoTEF
+from optimizers.Beer import BEER
 from world import create_adjacency_matrix
 
 
@@ -44,7 +46,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
     criterion = nn.CrossEntropyLoss()
 
     # initialize optimizer
-    optim = MoTEF(world_size, rank, model, train_loader, adjacency_matrix, gamma, eta, lambda_, comp_func, com_ratio)
+    optim = BEER(world_size, rank, model, train_loader, adjacency_matrix, gamma, eta, lambda_, comp_func, com_ratio)
 
     start_time = time.time()
     for epoch in range(epochs):
@@ -82,6 +84,7 @@ def motef_worker(rank, world_size, model, train_loader, val_loader, epochs, gamm
 
     cleanup()
 
+
 def worker_fn(rank, world_size, model, trainset, valset, epochs, gamma, eta, lambda_, comp_func, com_ratio,
               adjacency_matrix):
     train_sampler = torch.utils.data.distributed.DistributedSampler(trainset, num_replicas=world_size, rank=rank,
@@ -108,22 +111,27 @@ def run_motef(world_size, epochs, gamma, eta, lambda_, comp_func, com_ratio, top
     adjacency_matrix = create_adjacency_matrix(topology, world_size, prob)
 
     mp.spawn(worker_fn, args=(
-    world_size, model, train_set, val_set, epochs, gamma, eta, lambda_, comp_func, com_ratio, adjacency_matrix),
+        world_size, model, train_set, val_set, epochs, gamma, eta, lambda_, comp_func, com_ratio, adjacency_matrix),
              nprocs=world_size)
 
 
 if __name__ == "__main__":
+    # for beer: eta=0.01, gamma=0.002, com_ratio=0.2, comp_func=top_k, topology=grid,
+    # for motef: eta=0.03, gamma=0.001, com_ratio=0.2, comp_func=top_k, topology=grid
+
     world_size = 4
     start_time = time.time()
     ep = 10
     coms = [0.2, 0.8]
-    gammas = [0.001]
-    etas = [0.03]
+    gammas = [0.002]
+    etas = [0.01]
     lbds = [0.9, 0.9, 0.1, 0.01]
     topologies = ['grid', "ring", 'fully-connected', 'star', 'erdos-renyi']
     prob = 0.1  # Only used for erdos-renyi topology
     comp_func = top_k
-
+    optimizer = [MoTEF, BEER]
+    # for beer: eta=0.01, gamma=0.002, com_ratio=0.2, comp_func=top_k, topology=grid,
+    # for motef: eta=0.03, gamma=0.001, com_ratio=0.2, comp_func=top_k, topology=grid
     for gam, et, lbd, com, topology in itertools.product(gammas, etas, lbds, coms, topologies):
         if topology == 'erdos-renyi':
             print(f"gamma={gam}, eta={et}, lambda_={lbd}, com_ratio={com}, topology={topology}, prob={prob}")

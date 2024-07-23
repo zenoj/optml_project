@@ -10,7 +10,7 @@ from world import communicate_with_neighbors
 
 torch.manual_seed(42)
 
-class MoTEF():
+class BEER():
     def __init__(self, world_size, rank, model, train_loader, adjacency_matrix, gamma, eta, lbd, comp_func, com_ratio):
         # model parameters
         self.c = 0
@@ -52,12 +52,20 @@ class MoTEF():
         self.comp_func, self.com_ratio = comp_func, com_ratio
 
     def step(self, data, target):
+        criterion = nn.CrossEntropyLoss()
         if self.c != 0:
             q_h_j, q_g_j = communicate_with_neighbors(self.rank, self.world_size, self.q_h_i, self.q_g_i,
                                                       self.adjacency_matrix)
             for n in self.neighbor_states:
                 self.neighbor_states[n]["h"] += q_h_j[n]
                 self.neighbor_states[n]["g"] += q_g_j[n]
+
+        # Compute gradient
+        self.model.zero_grad()
+        output = self.model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        old_grad = torch.cat([p.grad.data.view(-1) for p in self.model.parameters()])
 
         weighted_diffs = sum(
             [self.weights[self.rank][n] * (self.neighbor_states[n]["h"] - self.h) for n in self.neighbor_states])
@@ -74,21 +82,17 @@ class MoTEF():
         self.q_h_i = self.comp_func((self.x - self.h), self.com_ratio)
         self.h += self.q_h_i
 
-        criterion = nn.CrossEntropyLoss()
         self.model.zero_grad()
         output = self.model(data)
         loss = criterion(output, target)
         loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
-        grad = torch.cat([p.grad.data.view(-1) for p in self.model.parameters()])
+        new_grad = torch.cat([p.grad.data.view(-1) for p in self.model.parameters()])
 
-        m_old = self.m.clone()
-        self.m = (1 - self.lbd) * self.m + self.lbd * grad
-        weighted_diffs_glob_grad = sum(
+        # Update v
+        weighted_diffs_grad = sum(
             [self.weights[self.rank][n] * (self.neighbor_states[n]["g"] - self.g) for n in self.neighbor_states])
-        self.v += self.gamma * weighted_diffs_glob_grad + self.m - m_old
-
+        self.v += self.gamma * weighted_diffs_grad + new_grad - old_grad
         self.q_g_i = self.comp_func((self.v - self.g), self.com_ratio)
         self.g += self.q_g_i
         self.c = 1

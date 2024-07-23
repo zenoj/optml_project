@@ -10,7 +10,7 @@ import torch.multiprocessing as mp
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
-from compression_func.Top import top_k_compress
+from compression_ops import top_k
 from torch import nn
 import time
 import os
@@ -107,7 +107,6 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
     for epoch in range(epochs):
         train_loader.sampler.set_epoch(epoch)
         model.train()
-        old_grad = initGrad.clone()
 
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
@@ -145,7 +144,7 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
                     param.data = x_i.view(shape)
 
             # Compute q_h
-            q_h_i = top_k_compress((x - h), com_ratio)
+            q_h_i = top_k((x - h), com_ratio)
             h += q_h_i
 
             # Compute gradient
@@ -155,10 +154,6 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
             loss.backward()
 
             new_grad = torch.cat([p.grad.data.view(-1) for p in model.parameters()])
-            # print(f"new gradient: {new_grad.norm().item()} old gradient: {old_grad.norm().item()}")
-            # Print gradient statistics
-            # print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Weights norm: {[p.data.norm().item() for p in model.parameters()]}")
-
 
             # Update v
             weighted_diffs_grad = [weights[rank][x] * (neighborStates[x]["g"] - g) for x in idxs_n]
@@ -166,7 +161,7 @@ def beer_worker(rank, world_size, model, train_loader, val_loader, epochs, gamma
             v += gamma * grad_mixing + new_grad - old_grad
 
             # Compute q_g
-            q_g_i = top_k_compress((v - g), com_ratio)
+            q_g_i = top_k((v - g), com_ratio)
             g += q_g_i
 
             # print stats

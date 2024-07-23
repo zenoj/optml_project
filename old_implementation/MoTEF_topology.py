@@ -21,7 +21,7 @@ import time
 import os
 import networkx as nx
 
-
+torch.manual_seed(42)
 def setup(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
