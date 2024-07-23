@@ -4,26 +4,18 @@ compare with document MoTEF_Alg.pdf
 part of the course work for optmization in machine learning
 """
 import itertools
+import os
+import time
 
-import compression_ops
-# from model.resnet18 import *
-from model.simpleMLP import *
-import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.utils.data import DataLoader
-import torchvision
-import torchvision.transforms as transforms
-from compression_ops import *
-from torchvision.models import resnet18
-from torch import nn
-import time
-import os
-import networkx as nx
 
-from optimizers import *
-from optimizers.Motef import MoTEF
+from compression_ops import *
+# from model.resnet18 import *
+from model.simpleMLP import *
 from optimizers.Beer import BEER
+from optimizers.Motef import MoTEF
 from world import create_adjacency_matrix
 
 
