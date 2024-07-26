@@ -1,0 +1,5 @@
+lambda = 0.9, accuracy=88.62
+lambda = 0.99, accuracy=88.64
+lambda = 0.5, accuracy=88.35
+lambda = 0.1, accuracy=89.65
+lambda = 0.01, accuracy=88.35

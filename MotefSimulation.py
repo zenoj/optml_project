@@ -1,7 +1,7 @@
 import torch
 
 import numpy as np
-from model.resnet8 import ResNet8
+from nda import log
 
 def create_mixing_matrix(n):
     """
@@ -50,28 +50,80 @@ def create_mixing_matrix(n):
 
     return W
 
-def calculateGradient(model,train_loader):
 
+class MoTEFSimulation:
+    def __init__(self, params, eta=0.1, gamma=0.1, lmbd=0.9, batch_size=1, compressor_type=None, compressor_param=None):
+        self.params = list(params)
+        self.eta = eta
+        self.gamma = gamma
+        self.lmbd = lmbd
+        log.info(f'gamma = {gamma:.3f}')
+        self.batch_size = batch_size
+        self.compressor_param = compressor_param
+        self.n_agent = len(self.params)
+        self.dim = sum(p.numel() for p in self.params)
+        self.x
 
-def motefSimulation(model, num_workers, w):
-    # create models for each worker
-    models = []
-    for i in range(num_workers):
-        models.append(ResNet8(10))
+        # Initialize W as identity matrix for now (you may want to set this differently)
+        self.W = torch.eye(self.n_agent)
+        self.W_shifted = self.W - torch.eye(self.n_agent)
 
-    # init tensors
-    x = torch.zeros_like(torch.cat([p.data.view(-1) for p in model.parameters()]))
-    num_params = x.size(-1)
-    x = torch.rand(num_workers, num_params)
+        self.H = torch.zeros(self.dim, self.n_agent)
+        self.V = self.grad()
+        self.G = torch.zeros(self.dim, self.n_agent)
+        self.M = torch.zeros(self.dim, self.n_agent)
+        self.M_previous = torch.zeros(self.dim, self.n_agent)
 
-    w_shifted = w - torch.eye(num_workers)
+        self.comm_rounds = 0
+        # Compressor
+        if compressor_type == 'top':
+            self.C = self.top_k
+        elif compressor_type == 'random':
+            self.C = self.random_k
+        elif compressor_type == 'gsgd':
+            self.C = self.gsgd
+        else:
+            self.C = lambda x, _: x  # identity
 
-    H = torch.zeros_like(x)
-    V = grad(x)
-    G = torch.zeros_like(x)
-    M = torch.zeros_like(x)
+    def grad(self, x):
+        # Compute gradient for all parameters
+        if x is None:
+            return torch.cat([p.grad.flatten() for p in self.params])
+        else:
+            # This part needs to be implemented based on your specific use case
+            # as it's not clear how 'j' is used to compute partial gradients
+            raise NotImplementedError("Partial gradient computation not implemented")
 
-    M_previous = np.zeros((p.dim, p.n_agent))
+    def step(self):
+        self.comm_rounds += 1
+
+        # Flatten all parameters
+        x = torch.cat([p.data.flatten() for p in self.params])
+
+        # Update x
+        x += self.gamma * self.H.mm(self.W_shifted) - self.eta * self.V
+
+        # Update H
+        self.H += self.C(x.unsqueeze(1) - self.H, self.compressor_param)
+
+        self.M_previous = self.M.clone()
+
+        # Compute new gradient
+        grad = self.grad()
+        self.M = (1 - self.lmbd) * self.M + self.lmbd * grad.unsqueeze(1)
+
+        # Update V
+        self.V += self.gamma * self.G.mm(self.W_shifted) + self.M - self.M_previous
+
+        # Update G
+        self.G += self.C(self.V.unsqueeze(1) - self.G, self.compressor_param)
+
+        # Update parameters
+        offset = 0
+        for p in self.params:
+            numel = p.numel()
+            p.data = x[offset:offset + numel].view_as(p.data)
+            offset += numel
 
 
 

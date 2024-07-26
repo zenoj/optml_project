@@ -1,0 +1,245 @@
+/home/jay/anaconda3/envs/pytorch/bin/python /home/jay/PycharmProjects/optml_project/main.py
+optimizer:<class 'optimizers.Motef.MoTEF'>, gamma=0.001, eta=0.03, lambda_=0.9, com_ratio=0.2, topology=ring
+rank:2
+rank:0
+rank:3
+rank:1
+Rank 0, Epoch 1, Val Loss: 2.2893, Val Acc: 0.2450, Time: 179.75s
+Rank 1, Epoch 1, Val Loss: 2.2896, Val Acc: 0.2831, Time: 180.77s
+Rank 2, Epoch 1, Val Loss: 2.2898, Val Acc: 0.2524, Time: 181.17s
+Rank 3, Epoch 1, Val Loss: 2.2889, Val Acc: 0.3031, Time: 181.05s
+Rank 3, Epoch 2, Val Loss: 2.0566, Val Acc: 0.4241, Time: 184.85s
+Rank 0, Epoch 2, Val Loss: 2.0692, Val Acc: 0.4166, Time: 186.48s
+Rank 1, Epoch 2, Val Loss: 2.0707, Val Acc: 0.4376, Time: 185.51s
+Rank 2, Epoch 2, Val Loss: 2.0848, Val Acc: 0.3369, Time: 185.42s
+Rank 3, Epoch 3, Val Loss: 0.8729, Val Acc: 0.7390, Time: 175.90s
+Rank 1, Epoch 3, Val Loss: 0.8921, Val Acc: 0.7156, Time: 175.87s
+Rank 2, Epoch 3, Val Loss: 0.8842, Val Acc: 0.7392, Time: 175.84s
+Rank 0, Epoch 3, Val Loss: 0.8818, Val Acc: 0.7179, Time: 176.36s
+Rank 2, Epoch 4, Val Loss: 0.6601, Val Acc: 0.8017, Time: 168.97s
+Rank 0, Epoch 4, Val Loss: 0.6506, Val Acc: 0.8046, Time: 168.88s
+Rank 1, Epoch 4, Val Loss: 0.6389, Val Acc: 0.8020, Time: 169.44s
+Rank 3, Epoch 4, Val Loss: 0.6470, Val Acc: 0.8039, Time: 170.01s
+Rank 2, Epoch 5, Val Loss: 0.5447, Val Acc: 0.8364, Time: 168.17s
+Rank 3, Epoch 5, Val Loss: 0.5466, Val Acc: 0.8338, Time: 167.94s
+Rank 1, Epoch 5, Val Loss: 0.5322, Val Acc: 0.8400, Time: 168.16s
+Rank 0, Epoch 5, Val Loss: 0.5454, Val Acc: 0.8363, Time: 168.61s
+Rank 3, Epoch 6, Val Loss: 0.4588, Val Acc: 0.8632, Time: 172.54s
+Rank 1, Epoch 6, Val Loss: 0.4533, Val Acc: 0.8632, Time: 172.78s
+Rank 0, Epoch 6, Val Loss: 0.4724, Val Acc: 0.8613, Time: 172.68s
+Rank 2, Epoch 6, Val Loss: 0.4650, Val Acc: 0.8621, Time: 173.38s
+Rank 3, Epoch 7, Val Loss: 0.4091, Val Acc: 0.8797, Time: 169.49s
+Rank 2, Epoch 7, Val Loss: 0.4518, Val Acc: 0.8620, Time: 169.22s
+Rank 1, Epoch 7, Val Loss: 0.4053, Val Acc: 0.8818, Time: 169.60s
+Rank 0, Epoch 7, Val Loss: 0.4265, Val Acc: 0.8721, Time: 169.69s
+Rank 2, Epoch 8, Val Loss: 0.3838, Val Acc: 0.8827, Time: 183.26s
+Rank 3, Epoch 8, Val Loss: 0.3958, Val Acc: 0.8834, Time: 184.22s
+Rank 1, Epoch 8, Val Loss: 0.3841, Val Acc: 0.8864, Time: 183.91s
+Rank 0, Epoch 8, Val Loss: 0.3843, Val Acc: 0.8837, Time: 183.82s
+Rank 2, Epoch 9, Val Loss: 0.4055, Val Acc: 0.8709, Time: 168.24s
+Rank 1, Epoch 9, Val Loss: 0.3887, Val Acc: 0.8833, Time: 169.38s
+Rank 3, Epoch 9, Val Loss: 0.3628, Val Acc: 0.8916, Time: 169.79s
+Rank 0, Epoch 9, Val Loss: 0.3630, Val Acc: 0.8878, Time: 169.64s
+Rank 1, Epoch 10, Val Loss: 0.4033, Val Acc: 0.8686, Time: 182.42s
+Rank 3, Epoch 10, Val Loss: 0.3751, Val Acc: 0.8855, Time: 184.04s
+Rank 2, Epoch 10, Val Loss: 0.4191, Val Acc: 0.8693, Time: 186.32s
+Rank 0, Epoch 10, Val Loss: 0.4582, Val Acc: 0.8499, Time: 184.11s
+Total execution time: 1767.44s
+max acc 89.16
+
+optimizer:<class 'optimizers.Motef.MoTEF'>, gamma=0.001, eta=0.03, lambda_=0.99, com_ratio=0.2, topology=ring
+rank:1
+rank:2
+rank:3
+rank:0
+Rank 1, Epoch 1, Val Loss: 2.2893, Val Acc: 0.2985, Time: 181.56s
+Rank 0, Epoch 1, Val Loss: 2.2892, Val Acc: 0.2395, Time: 182.50s
+Rank 3, Epoch 1, Val Loss: 2.2887, Val Acc: 0.2990, Time: 182.19s
+Rank 2, Epoch 1, Val Loss: 2.2896, Val Acc: 0.2577, Time: 182.51s
+Rank 0, Epoch 2, Val Loss: 2.0532, Val Acc: 0.4324, Time: 168.46s
+Rank 2, Epoch 2, Val Loss: 2.0694, Val Acc: 0.3428, Time: 168.35s
+Rank 1, Epoch 2, Val Loss: 2.0539, Val Acc: 0.4074, Time: 169.24s
+Rank 3, Epoch 2, Val Loss: 2.0394, Val Acc: 0.3828, Time: 168.84s
+Rank 0, Epoch 3, Val Loss: 0.8692, Val Acc: 0.7154, Time: 173.14s
+Rank 2, Epoch 3, Val Loss: 0.8666, Val Acc: 0.7430, Time: 174.21s
+Rank 3, Epoch 3, Val Loss: 0.8613, Val Acc: 0.7426, Time: 173.91s
+Rank 1, Epoch 3, Val Loss: 0.8780, Val Acc: 0.7141, Time: 174.30s
+Rank 0, Epoch 4, Val Loss: 0.6410, Val Acc: 0.8080, Time: 178.35s
+Rank 3, Epoch 4, Val Loss: 0.6453, Val Acc: 0.8048, Time: 177.84s
+Rank 1, Epoch 4, Val Loss: 0.6375, Val Acc: 0.8054, Time: 177.88s
+Rank 2, Epoch 4, Val Loss: 0.6515, Val Acc: 0.8008, Time: 178.17s
+Rank 3, Epoch 5, Val Loss: 0.5455, Val Acc: 0.8353, Time: 166.10s
+Rank 1, Epoch 5, Val Loss: 0.5329, Val Acc: 0.8387, Time: 167.77s
+Rank 2, Epoch 5, Val Loss: 0.5288, Val Acc: 0.8421, Time: 167.84s
+Rank 0, Epoch 5, Val Loss: 0.5316, Val Acc: 0.8393, Time: 168.91s
+Rank 1, Epoch 6, Val Loss: 0.4575, Val Acc: 0.8609, Time: 168.50s
+Rank 0, Epoch 6, Val Loss: 0.4661, Val Acc: 0.8648, Time: 169.30s
+Rank 2, Epoch 6, Val Loss: 0.4602, Val Acc: 0.8605, Time: 169.78s
+Rank 3, Epoch 6, Val Loss: 0.4565, Val Acc: 0.8641, Time: 171.95s
+Rank 0, Epoch 7, Val Loss: 0.4240, Val Acc: 0.8743, Time: 175.59s
+Rank 1, Epoch 7, Val Loss: 0.4127, Val Acc: 0.8792, Time: 177.86s
+Rank 2, Epoch 7, Val Loss: 0.4429, Val Acc: 0.8667, Time: 176.60s
+Rank 3, Epoch 7, Val Loss: 0.4113, Val Acc: 0.8782, Time: 176.48s
+Rank 3, Epoch 8, Val Loss: 0.4018, Val Acc: 0.8797, Time: 174.30s
+Rank 0, Epoch 8, Val Loss: 0.3860, Val Acc: 0.8835, Time: 176.00s
+Rank 1, Epoch 8, Val Loss: 0.3858, Val Acc: 0.8864, Time: 174.96s
+Rank 2, Epoch 8, Val Loss: 0.3929, Val Acc: 0.8785, Time: 174.89s
+Rank 2, Epoch 9, Val Loss: 0.4133, Val Acc: 0.8752, Time: 184.15s
+Rank 3, Epoch 9, Val Loss: 0.4055, Val Acc: 0.8763, Time: 185.49s
+Rank 0, Epoch 9, Val Loss: 0.3823, Val Acc: 0.8843, Time: 185.30s
+Rank 1, Epoch 9, Val Loss: 0.4069, Val Acc: 0.8767, Time: 185.28s
+Rank 2, Epoch 10, Val Loss: 0.4324, Val Acc: 0.8624, Time: 176.88s
+Rank 3, Epoch 10, Val Loss: 0.4089, Val Acc: 0.8738, Time: 176.57s
+Rank 0, Epoch 10, Val Loss: 0.4887, Val Acc: 0.8442, Time: 176.94s
+Rank 1, Epoch 10, Val Loss: 0.4316, Val Acc: 0.8615, Time: 176.83s
+Total execution time: 3529.78s
+max acc 88.64
+
+optimizer:<class 'optimizers.Motef.MoTEF'>, gamma=0.001, eta=0.03, lambda_=0.5, com_ratio=0.2, topology=ring
+rank:2
+rank:3
+rank:1
+rank:0
+Rank 0, Epoch 1, Val Loss: 2.2893, Val Acc: 0.2365, Time: 169.51s
+Rank 1, Epoch 1, Val Loss: 2.2897, Val Acc: 0.2615, Time: 171.28s
+Rank 3, Epoch 1, Val Loss: 2.2890, Val Acc: 0.2818, Time: 171.27s
+Rank 2, Epoch 1, Val Loss: 2.2899, Val Acc: 0.2471, Time: 171.27s
+Rank 2, Epoch 2, Val Loss: 2.0779, Val Acc: 0.3693, Time: 163.59s
+Rank 1, Epoch 2, Val Loss: 2.0605, Val Acc: 0.4089, Time: 166.28s
+Rank 3, Epoch 2, Val Loss: 2.0441, Val Acc: 0.3903, Time: 166.28s
+Rank 0, Epoch 2, Val Loss: 2.0569, Val Acc: 0.4308, Time: 168.26s
+Rank 0, Epoch 3, Val Loss: 0.8492, Val Acc: 0.7285, Time: 168.51s
+Rank 3, Epoch 3, Val Loss: 0.8426, Val Acc: 0.7444, Time: 169.11s
+Rank 1, Epoch 3, Val Loss: 0.8537, Val Acc: 0.7314, Time: 169.34s
+Rank 2, Epoch 3, Val Loss: 0.8570, Val Acc: 0.7402, Time: 171.89s
+Rank 3, Epoch 4, Val Loss: 0.6298, Val Acc: 0.8065, Time: 166.98s
+Rank 2, Epoch 4, Val Loss: 0.6383, Val Acc: 0.8078, Time: 168.95s
+Rank 0, Epoch 4, Val Loss: 0.6339, Val Acc: 0.8075, Time: 169.49s
+Rank 1, Epoch 4, Val Loss: 0.6255, Val Acc: 0.8081, Time: 169.29s
+Rank 0, Epoch 5, Val Loss: 0.5272, Val Acc: 0.8402, Time: 178.88s
+Rank 3, Epoch 5, Val Loss: 0.5304, Val Acc: 0.8389, Time: 181.46s
+Rank 1, Epoch 5, Val Loss: 0.5263, Val Acc: 0.8423, Time: 179.55s
+Rank 2, Epoch 5, Val Loss: 0.5287, Val Acc: 0.8380, Time: 179.93s
+Rank 0, Epoch 6, Val Loss: 0.4606, Val Acc: 0.8588, Time: 172.46s
+Rank 2, Epoch 6, Val Loss: 0.4599, Val Acc: 0.8605, Time: 172.16s
+Rank 3, Epoch 6, Val Loss: 0.4568, Val Acc: 0.8606, Time: 172.83s
+Rank 1, Epoch 6, Val Loss: 0.4606, Val Acc: 0.8545, Time: 172.56s
+Rank 2, Epoch 7, Val Loss: 0.4355, Val Acc: 0.8664, Time: 174.64s
+Rank 3, Epoch 7, Val Loss: 0.4099, Val Acc: 0.8772, Time: 174.90s
+Rank 0, Epoch 7, Val Loss: 0.4265, Val Acc: 0.8728, Time: 176.01s
+Rank 1, Epoch 7, Val Loss: 0.4127, Val Acc: 0.8763, Time: 175.16s
+Rank 1, Epoch 8, Val Loss: 0.3938, Val Acc: 0.8798, Time: 168.46s
+Rank 3, Epoch 8, Val Loss: 0.4027, Val Acc: 0.8806, Time: 169.58s
+Rank 2, Epoch 8, Val Loss: 0.3847, Val Acc: 0.8835, Time: 170.02s
+Rank 0, Epoch 8, Val Loss: 0.3860, Val Acc: 0.8829, Time: 169.40s
+Rank 0, Epoch 9, Val Loss: 0.3979, Val Acc: 0.8722, Time: 165.69s
+Rank 2, Epoch 9, Val Loss: 0.4202, Val Acc: 0.8652, Time: 167.59s
+Rank 1, Epoch 9, Val Loss: 0.4006, Val Acc: 0.8772, Time: 168.44s
+Rank 3, Epoch 9, Val Loss: 0.3830, Val Acc: 0.8846, Time: 167.92s
+Rank 3, Epoch 10, Val Loss: 0.4079, Val Acc: 0.8747, Time: 165.06s
+Rank 1, Epoch 10, Val Loss: 0.4109, Val Acc: 0.8747, Time: 165.50s
+Rank 0, Epoch 10, Val Loss: 0.4631, Val Acc: 0.8466, Time: 167.60s
+Rank 2, Epoch 10, Val Loss: 0.4150, Val Acc: 0.8725, Time: 165.97s
+Total execution time: 5243.81s
+max acc 88.35
+
+/home/jay/anaconda3/envs/pytorch/bin/python /home/jay/PycharmProjects/optml_project/main.py
+optimizer:<class 'optimizers.Motef.MoTEF'>, gamma=0.001, eta=0.03, lambda_=0.1, comp_func: <function top_k at 0x7e79104b24d0>, comp_ratio=0.2, topology=ring, batch_size=128
+rank:1rank:3
+
+rank:0
+rank:2
+Rank 0, Epoch 1, Batch_idx:117, Val Loss: 2.2912, Val Acc: 0.1902, Time: 118.91s
+Rank 3, Epoch 1, Batch_idx:117, Val Loss: 2.2913, Val Acc: 0.1615, Time: 120.12s
+Rank 1, Epoch 1, Batch_idx:117, Val Loss: 2.2914, Val Acc: 0.2142, Time: 119.87s
+Rank 2, Epoch 1, Batch_idx:117, Val Loss: 2.2915, Val Acc: 0.2301, Time: 119.81s
+Rank 2, Epoch 2, Batch_idx:117, Val Loss: 2.2055, Val Acc: 0.3696, Time: 118.00s
+Rank 0, Epoch 2, Batch_idx:117, Val Loss: 2.1954, Val Acc: 0.3793, Time: 120.46s
+Rank 1, Epoch 2, Batch_idx:117, Val Loss: 2.1941, Val Acc: 0.3244, Time: 119.92s
+Rank 3, Epoch 2, Batch_idx:117, Val Loss: 2.1975, Val Acc: 0.4010, Time: 120.12s
+Rank 2, Epoch 3, Batch_idx:117, Val Loss: 1.1061, Val Acc: 0.6761, Time: 119.98s
+Rank 1, Epoch 3, Batch_idx:117, Val Loss: 1.0879, Val Acc: 0.6955, Time: 119.08s
+Rank 3, Epoch 3, Batch_idx:117, Val Loss: 1.0608, Val Acc: 0.7000, Time: 119.07s
+Rank 0, Epoch 3, Batch_idx:117, Val Loss: 1.0659, Val Acc: 0.6879, Time: 119.33s
+Rank 3, Epoch 4, Batch_idx:117, Val Loss: 0.6973, Val Acc: 0.7748, Time: 138.45s
+Rank 1, Epoch 4, Batch_idx:117, Val Loss: 0.6912, Val Acc: 0.7792, Time: 139.03s
+Rank 2, Epoch 4, Batch_idx:117, Val Loss: 0.6984, Val Acc: 0.7837, Time: 140.07s
+Rank 0, Epoch 4, Batch_idx:117, Val Loss: 0.7023, Val Acc: 0.7841, Time: 139.07s
+Rank 0, Epoch 5, Batch_idx:117, Val Loss: 0.5761, Val Acc: 0.8249, Time: 132.97s
+Rank 3, Epoch 5, Batch_idx:117, Val Loss: 0.5694, Val Acc: 0.8299, Time: 135.04s
+Rank 2, Epoch 5, Batch_idx:117, Val Loss: 0.5679, Val Acc: 0.8310, Time: 134.49s
+Rank 1, Epoch 5, Batch_idx:117, Val Loss: 0.5657, Val Acc: 0.8253, Time: 134.72s
+Rank 3, Epoch 6, Batch_idx:117, Val Loss: 0.4691, Val Acc: 0.8605, Time: 128.15s
+Rank 2, Epoch 6, Batch_idx:117, Val Loss: 0.4735, Val Acc: 0.8608, Time: 130.87s
+Rank 0, Epoch 6, Batch_idx:117, Val Loss: 0.4852, Val Acc: 0.8593, Time: 132.60s
+Rank 1, Epoch 6, Batch_idx:117, Val Loss: 0.4666, Val Acc: 0.8655, Time: 131.11s
+Rank 2, Epoch 7, Batch_idx:117, Val Loss: 0.4128, Val Acc: 0.8798, Time: 123.07s
+Rank 1, Epoch 7, Batch_idx:117, Val Loss: 0.4279, Val Acc: 0.8765, Time: 123.04s
+Rank 3, Epoch 7, Batch_idx:117, Val Loss: 0.4116, Val Acc: 0.8820, Time: 126.26s
+Rank 0, Epoch 7, Batch_idx:117, Val Loss: 0.4230, Val Acc: 0.8766, Time: 123.20s
+Rank 1, Epoch 8, Batch_idx:117, Val Loss: 0.3791, Val Acc: 0.8885, Time: 120.11s
+Rank 0, Epoch 8, Batch_idx:117, Val Loss: 0.3850, Val Acc: 0.8875, Time: 120.72s
+Rank 3, Epoch 8, Batch_idx:117, Val Loss: 0.3750, Val Acc: 0.8882, Time: 120.88s
+Rank 2, Epoch 8, Batch_idx:117, Val Loss: 0.3797, Val Acc: 0.8880, Time: 121.32s
+Rank 3, Epoch 9, Batch_idx:117, Val Loss: 0.3572, Val Acc: 0.8946, Time: 114.08s
+Rank 1, Epoch 9, Batch_idx:117, Val Loss: 0.3709, Val Acc: 0.8906, Time: 115.49s
+Rank 2, Epoch 9, Batch_idx:117, Val Loss: 0.3735, Val Acc: 0.8871, Time: 114.67s
+Rank 0, Epoch 9, Batch_idx:117, Val Loss: 0.3612, Val Acc: 0.8920, Time: 114.91s
+Rank 0, Epoch 10, Batch_idx:117, Val Loss: 0.3510, Val Acc: 0.8965, Time: 127.07s
+Rank 3, Epoch 10, Batch_idx:117, Val Loss: 0.3641, Val Acc: 0.8934, Time: 128.24s
+Rank 2, Epoch 10, Batch_idx:117, Val Loss: 0.3564, Val Acc: 0.8918, Time: 127.62s
+Rank 1, Epoch 10, Batch_idx:117, Val Loss: 0.3620, Val Acc: 0.8901, Time: 127.74s
+Total execution time: 1255.28s
+max acc = 89.65
+
+/home/jay/anaconda3/envs/pytorch/bin/python /home/jay/PycharmProjects/optml_project/main.py
+optimizer:<class 'optimizers.Motef.MoTEF'>, gamma=0.001, eta=0.03, lambda_=0.01, comp_func: <function top_k at 0x73d2d93be4d0>, comp_ratio=0.2, topology=ring, batch_size=128
+rank:1
+rank:3
+rank:2
+rank:0
+Rank 1, Epoch 1, Batch_idx:117, Val Loss: 2.2898, Val Acc: 0.1010, Time: 117.13s
+Rank 0, Epoch 1, Batch_idx:117, Val Loss: 2.2876, Val Acc: 0.1048, Time: 117.36s
+Rank 3, Epoch 1, Batch_idx:117, Val Loss: 2.2912, Val Acc: 0.1938, Time: 117.57s
+Rank 2, Epoch 1, Batch_idx:117, Val Loss: 2.2914, Val Acc: 0.1009, Time: 117.65s
+Rank 2, Epoch 2, Batch_idx:117, Val Loss: 2.2124, Val Acc: 0.1873, Time: 126.12s
+Rank 1, Epoch 2, Batch_idx:117, Val Loss: 2.2027, Val Acc: 0.1476, Time: 126.92s
+Rank 3, Epoch 2, Batch_idx:117, Val Loss: 2.2163, Val Acc: 0.2730, Time: 126.54s
+Rank 0, Epoch 2, Batch_idx:117, Val Loss: 2.1914, Val Acc: 0.3766, Time: 126.65s
+Rank 0, Epoch 3, Batch_idx:117, Val Loss: 1.7919, Val Acc: 0.4928, Time: 119.02s
+Rank 1, Epoch 3, Batch_idx:117, Val Loss: 1.8745, Val Acc: 0.4278, Time: 121.44s
+Rank 2, Epoch 3, Batch_idx:117, Val Loss: 1.8574, Val Acc: 0.3572, Time: 121.72s
+Rank 3, Epoch 3, Batch_idx:117, Val Loss: 1.8544, Val Acc: 0.4790, Time: 121.47s
+Rank 3, Epoch 4, Batch_idx:117, Val Loss: 1.0370, Val Acc: 0.6708, Time: 121.09s
+Rank 1, Epoch 4, Batch_idx:117, Val Loss: 1.1623, Val Acc: 0.6588, Time: 124.01s
+Rank 0, Epoch 4, Batch_idx:117, Val Loss: 0.9870, Val Acc: 0.6920, Time: 126.24s
+Rank 2, Epoch 4, Batch_idx:117, Val Loss: 1.1812, Val Acc: 0.6309, Time: 124.13s
+Rank 2, Epoch 5, Batch_idx:117, Val Loss: 0.7858, Val Acc: 0.7473, Time: 116.04s
+Rank 3, Epoch 5, Batch_idx:117, Val Loss: 0.7570, Val Acc: 0.7457, Time: 121.78s
+Rank 0, Epoch 5, Batch_idx:117, Val Loss: 0.7457, Val Acc: 0.7581, Time: 119.12s
+Rank 1, Epoch 5, Batch_idx:117, Val Loss: 0.7721, Val Acc: 0.7559, Time: 119.27s
+Rank 3, Epoch 6, Batch_idx:117, Val Loss: 0.6557, Val Acc: 0.7978, Time: 124.02s
+Rank 2, Epoch 6, Batch_idx:117, Val Loss: 0.6581, Val Acc: 0.8020, Time: 126.89s
+Rank 1, Epoch 6, Batch_idx:117, Val Loss: 0.6657, Val Acc: 0.7975, Time: 123.94s
+Rank 0, Epoch 6, Batch_idx:117, Val Loss: 0.6612, Val Acc: 0.8025, Time: 124.20s
+Rank 1, Epoch 7, Batch_idx:117, Val Loss: 0.5898, Val Acc: 0.8424, Time: 125.37s
+Rank 3, Epoch 7, Batch_idx:117, Val Loss: 0.5776, Val Acc: 0.8419, Time: 125.72s
+Rank 2, Epoch 7, Batch_idx:117, Val Loss: 0.5864, Val Acc: 0.8401, Time: 125.67s
+Rank 0, Epoch 7, Batch_idx:117, Val Loss: 0.5933, Val Acc: 0.8372, Time: 125.52s
+Rank 1, Epoch 8, Batch_idx:117, Val Loss: 0.4909, Val Acc: 0.8663, Time: 120.56s
+Rank 0, Epoch 8, Batch_idx:117, Val Loss: 0.4883, Val Acc: 0.8636, Time: 121.46s
+Rank 3, Epoch 8, Batch_idx:117, Val Loss: 0.4904, Val Acc: 0.8662, Time: 121.66s
+Rank 2, Epoch 8, Batch_idx:117, Val Loss: 0.4897, Val Acc: 0.8651, Time: 121.74s
+Rank 1, Epoch 9, Batch_idx:117, Val Loss: 0.4262, Val Acc: 0.8799, Time: 120.39s
+Rank 3, Epoch 9, Batch_idx:117, Val Loss: 0.4221, Val Acc: 0.8790, Time: 119.41s
+Rank 2, Epoch 9, Batch_idx:117, Val Loss: 0.4310, Val Acc: 0.8779, Time: 119.61s
+Rank 0, Epoch 9, Batch_idx:117, Val Loss: 0.4393, Val Acc: 0.8760, Time: 119.84s
+Rank 2, Epoch 10, Batch_idx:117, Val Loss: 0.4004, Val Acc: 0.8838, Time: 115.33s
+Rank 0, Epoch 10, Batch_idx:117, Val Loss: 0.4008, Val Acc: 0.8794, Time: 117.19s
+Rank 3, Epoch 10, Batch_idx:117, Val Loss: 0.3991, Val Acc: 0.8835, Time: 117.55s
+Rank 1, Epoch 10, Batch_idx:117, Val Loss: 0.4047, Val Acc: 0.8823, Time: 117.86s
+Total execution time: 1221.20s
+
+max acc = 88.35
+
+Process finished with exit code 0
