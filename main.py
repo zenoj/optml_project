@@ -15,8 +15,8 @@ import early_stopping
 from compression_ops import *
 # from model.resnet18 import *
 from model.simpleMLP import *
-from optimizers.Beer import BEER
-from optimizers.Motef import MoTEF
+from optimizers.beer import BEER
+from optimizers.motef import MoTEF
 from world import create_adjacency_matrix
 from early_stopping import early_stopping_factory
 
