@@ -3,7 +3,7 @@ In this course work project we will benchmark the [MoTEF algorithm](https://arxi
 proposed by Islamov et al. and compare the measurements with another state of the art federated learning 
 algorithms BEER (https://users.ece.cmu.edu/~yuejiec/papers/BEER.pdf).
 The main.py file is the main file of this project where parameters can be specified.
-All the results are summarized in the project_report.pdf and the raw data for those in param_tests.
+All the results are summarized in the project_report.pdf and the raw data for those results can be found in param_tests.
 ## Project Structure for Reproducability
 
 ### Experiment setup
