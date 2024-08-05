@@ -49,33 +49,12 @@ def motef_worker(rank, world_size, model, optimizer, train_loader, val_loader, e
         for batch_idx, (data, target) in enumerate(train_loader):
             # go one iteration of the optimizer and return current loss
             loss = optim.step(data, target)
-            # if batch_idx % 2 == 0:
-            #     print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.6f}")
-            #     print(f"x norm: {optim.x.norm().item()}, v norm: {optim.v.norm().item()}")
-            #     print(f"h norm: {optim.h.norm().item()}, g norm: {optim.g.norm().item()}")
+            if batch_idx % 2 == 0:
+                print(f"Rank {rank}, Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.6f}")
+                print(f"x norm: {optim.x.norm().item()}, v norm: {optim.v.norm().item()}")
+                print(f"h norm: {optim.h.norm().item()}, g norm: {optim.g.norm().item()}")
 
-            # do validation every 1/5 of an epoch
-            # if (batch_idx + 1) % int(3000 / data.size(0)) == 0:
-            #     model.eval()
-            #     val_loss = 0
-            #     val_correct = 0
-            #     val_total = 0
-            #     with torch.no_grad():
-            #         for data, target in val_loader:
-            #             data, target = data.to(device), target.to(device)
-            #             output = model(data)
-            #             val_loss += criterion(output, target).item()
-            #             _, predicted = torch.max(output.data, 1)
-            #             val_total += target.size(0)
-            #             val_correct += (predicted == target).sum().item()
-            #
-            #     val_loss /= len(val_loader)
-            #     val_acc = val_correct / val_total
-            #     epoch_time = time.time() - start_time
-            #     print(
-            #         f"Rank {rank}, Epoch {epoch + 1}, Batch_idx:{batch_idx}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.2f}s")
-            #
-            #     start_time = time.time()
+
         model.eval()
         val_loss = 0
         val_correct = 0
@@ -138,8 +117,8 @@ if __name__ == "__main__":
     ep = 10
     batch_sizes = [128]
     comp_ratios = [8]
-    gammas = [0.001]
-    etas = [0.03]
+    gammas = [0.0002]
+    etas = [0.1]
     lbds = [0.1]
 
     # topologies = ['grid', "ring", 'fully-connected', 'star', 'erdos-renyi']
